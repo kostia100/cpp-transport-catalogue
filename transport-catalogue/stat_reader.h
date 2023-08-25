@@ -1,6 +1,7 @@
 #pragma once
 
 #include "input_reader.h"
+#include "transport_catalogue.h"
 #include <vector>
 #include <string>
 #include <iostream>
@@ -29,6 +30,10 @@ namespace catalogue {
 		};
 
 
+		std::ostream& operator<<(std::ostream& out, const StopInfo& stop);
+
+		std::ostream& operator<<(std::ostream& out, const BusInfo& bus);
+
 		/// <summary>
 		/// Read output requests from stream and parse.
 		/// </summary>
@@ -42,9 +47,19 @@ namespace catalogue {
 		/// </summary>
 		/// <param name="out"></param>
 		/// <param name="request"></param>
-		/// <param name="cat"></param>
+		/// <param name="catalogue"></param>
 		/// <returns></returns>
-		std::ostream& GetStats(std::ostream& out, std::vector<OutputRequest> request, TransportCatalogue& cat);
+		std::ostream& GetStats(std::ostream& out, std::vector<OutputRequest> request, TransportCatalogue& catalogue);
+
+
+		/// <summary>
+		/// Read request from istream, ask request to catalogue, write result in ostream.
+		/// </summary>
+		/// <param name="input"></param>
+		/// <param name="out"></param>
+		/// <param name="request"></param>
+		/// <param name="catalogue"></param>
+		void GetRequestFromCatalogue(std::istream& input, std::ostream& out, TransportCatalogue& catalogue);
 
 	}
 

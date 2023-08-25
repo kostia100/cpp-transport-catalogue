@@ -24,45 +24,9 @@ namespace catalogue {
 
 
 
-
-	std::ostream& operator<<(std::ostream& out, const BusInfo& info) {
-		out << "Bus " << info.bus_name << ": ";
-		if (info.bus_exists) {
-			out << info.all_stops << " stops on route, ";
-			out << info.unique_stops << " unique stops, ";
-			out << std::setprecision(6) << info.traffic_route_length << " route length, ";
-			out << std::setprecision(6) << info.curvature << " curvature";
-			return out;
-		}
-		out << "not found";
-		return out;
-	}
-
-
-	std::ostream& operator<<(std::ostream& out, const StopInfo& info) {
-		out << "Stop " << info.stop_name << ": ";
-		if (!info.stop_exists) {
-			out << "not found";
-		}
-		else if (info.buses.size() == 0) {
-			out << "no buses";
-		}
-		else {
-			out << "buses";
-			for (auto& b : info.buses) {
-				out << " " << b;
-			}
-		}
-		return out;
-	}
-
-
-
-
-
-	void TransportCatalogue::AddStop(std::pair<std::string, std::pair<double, double>> input) {
-		Coordinates crd = { input.second.first,input.second.second };
-		Stop stop = { input.first, crd };
+	void TransportCatalogue::AddStop(std::string stop_name, double coordX, double coordY) {
+		Coordinates crd = { coordX,coordY };
+		Stop stop = { stop_name, crd };
 		stops_.push_back(stop);
 		Stop* ptr_stop = &stops_.back();
 		stopname_to_stop.insert({ stop.stop_name,ptr_stop });
@@ -72,15 +36,15 @@ namespace catalogue {
 
 
 
-	void TransportCatalogue::AddBus(std::pair<std::string, std::vector<std::string>> input) {
+	void TransportCatalogue::AddBus(std::string name_bus, std::vector<std::string> names_stops) {
 		std::vector<Stop*> bus_stops;
-		for (const auto stop : input.second) {
+		for (const auto stop : names_stops) {
 			bus_stops.push_back(stopname_to_stop[stop]);
 		}
 
-		buses_.push_back({ input.first , bus_stops });
+		buses_.push_back({ name_bus , bus_stops });
 		Bus* ptr_bus = &buses_.back();
-		busname_to_bus.insert({ input.first ,  ptr_bus });
+		busname_to_bus.insert({ name_bus,  ptr_bus });
 
 		//Cross-data.
 		for (Stop* stop_ptr : ptr_bus->stops) {
@@ -120,7 +84,7 @@ namespace catalogue {
 		}
 	}
 
-	void TransportCatalogue::AddNearestStops(StopInputData data) {
+	void TransportCatalogue::AddNearestStops(input::StopInputData data) {
 		Stop* base_stop = stopname_to_stop[data.name];
 		for (const auto& stp : data.connected_stop) {
 			Stop* nearby_stop = stopname_to_stop.at(stp.first);
@@ -173,6 +137,39 @@ namespace catalogue {
 			return StopInfo{ false, stop, {} };
 		}
 		return StopInfo{ true,stop, stopname_to_busnames.at(stop_ptr->stop_name) };
+	}
+
+
+	void AddInputRequest(const std::vector<input::IntputRequest>& requests, TransportCatalogue& catalogue) {
+
+		for (const auto& r : requests) {
+			if (r.type == input::InputType::STOP) {
+				input::StopInputData stop = input::ParseStopData(r.text);
+				catalogue.AddStop(stop.name, stop.coordinates.first, stop.coordinates.second);
+			}
+		}
+
+		for (const auto& r : requests) {
+			if (r.type == input::InputType::STOP) {
+				input::StopInputData stop = input::ParseStopData(r.text);
+				catalogue.AddNearestStops(stop);
+			}
+		}
+
+
+
+		for (const auto& r : requests) {
+			if (r.type == input::InputType::BUS) {
+				auto bus = input::ParseBusData(r.text);
+				catalogue.AddBus(bus.first, bus.second);
+			}
+		}
+
+	}
+
+	void WriteInputToCatalogue(std::istream& input, TransportCatalogue& catalogue) {
+		std::vector<input::IntputRequest> requests_input = input::ReadInputRequests(std::cin);
+		AddInputRequest(requests_input, catalogue);
 	}
 
 }

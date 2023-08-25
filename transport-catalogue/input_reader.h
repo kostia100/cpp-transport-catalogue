@@ -2,7 +2,7 @@
 
 #include <vector>
 #include <string>
-#include "transport_catalogue.h"
+#include <unordered_map>
 
 
 namespace catalogue {
@@ -32,16 +32,18 @@ namespace catalogue {
 
 		}
 
+		struct StopInputData {
+			std::string name;
+			std::pair<double, double> coordinates;
+			std::unordered_map<std::string, int> connected_stop;
+		};
+
+
+
 		/// <summary>
 		/// Decide if request is BUS/STOP request and communicate the rest of the request.
 		/// </summary>
 		std::vector<IntputRequest> ReadInputRequests(std::istream& input);
-
-		
-
-		
-
-
 
 
 		/// <summary>
@@ -53,11 +55,7 @@ namespace catalogue {
 		/// Parse Bus text to bus_name + full stop route
 		/// </summary>
 		std::pair<std::string, std::vector<std::string>> ParseBusData(const std::string& text);
-
-		/// <summary>
-		/// Add request to data base
-		/// </summary>
-		void AddInputRequest(const std::vector<IntputRequest>& request, TransportCatalogue& cat);
+		
 
 	}
 

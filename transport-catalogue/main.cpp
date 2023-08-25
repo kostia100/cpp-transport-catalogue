@@ -20,12 +20,14 @@ int main()
     tests::TestFullRequestBusAndStop();
     std::cout << "++++" << std::endl;
 
-    
-    TransportCatalogue cat;
-    std::vector<input::IntputRequest> requests_input = input::ReadInputRequests(std::cin);
-    input::AddInputRequest(requests_input, cat);
-    std::vector<requests::OutputRequest> requests_output = requests::ReadStatRequest(std::cin);
-    requests::GetStats(std::cout, requests_output, cat);
 
+    TransportCatalogue catalogue;
+
+    
+    WriteInputToCatalogue(std::cin, catalogue);
+    requests::GetRequestFromCatalogue(std::cin, std::cout, catalogue);
+    
 }
+
+
 

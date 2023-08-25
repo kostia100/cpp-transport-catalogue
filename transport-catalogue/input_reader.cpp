@@ -1,6 +1,7 @@
 #include "input_reader.h"
 #include <iostream>
 #include <sstream>
+#include <unordered_map>
 
 
 namespace catalogue {
@@ -138,37 +139,7 @@ namespace catalogue {
 
 			return { bus_name , stops };
 		}
-
-
-
-
-		void AddInputRequest(const std::vector<IntputRequest>& requests, TransportCatalogue& cat) {
-
-			for (const auto& r : requests) {
-				if (r.type == InputType::STOP) {
-					StopInputData stop = ParseStopData(r.text);
-					cat.AddStop({ stop.name,{stop.coordinates} });
-				}
-			}
-
-			for (const auto& r : requests) {
-				if (r.type == InputType::STOP) {
-					StopInputData stop = ParseStopData(r.text);
-					cat.AddNearestStops(stop);
-				}
-			}
-
-
-
-			for (const auto& r : requests) {
-				if (r.type == InputType::BUS) {
-					auto bus = ParseBusData(r.text);
-					cat.AddBus(bus);
-				}
-			}
-
-
-		}
+		
 
 	}
 

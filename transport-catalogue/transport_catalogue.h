@@ -9,6 +9,8 @@
 #include <map>
 #include <set>
 #include "geo.h"
+#include "input_reader.h"
+
 
 
 namespace catalogue {
@@ -63,35 +65,20 @@ namespace catalogue {
 	};
 
 
-
-	std::ostream& operator<<(std::ostream& out, const BusInfo& bus);
-
 	struct StopInfo {
 		bool stop_exists;
 		std::string stop_name;
 		std::set<std::string> buses;
 	};
 
-	std::ostream& operator<<(std::ostream& out, const StopInfo& stop);
-
-	struct StopInputData {
-		std::string name;
-		std::pair<double, double> coordinates;
-		std::unordered_map<std::string, int> connected_stop;
-	};
+	
 
 	class TransportCatalogue {
 	public:
-		void AddStop(std::pair<std::string, std::pair<double, double>> input);
+		void AddStop(std::string stop_name, double coordX , double coordY);
+		void AddBus(std::string name_bus, std::vector<std::string> names_stops);
 
-		void AddBus(std::pair<std::string, std::vector<std::string>> input);
-
-		void AddNearestStops(StopInputData data);
-		int GetDistanceBetweenStops(Stop* start, Stop* end) const;
-
-		int GetTrafficRoute(Bus* bus) const;
-		double GetCurvatureBus(Bus* bus) const;
-
+		void AddNearestStops(input::StopInputData data);
 
 		Stop* FindStop(const std::string& stop) const;
 		Bus* FindBus(const std::string& bus) const;
@@ -101,6 +88,10 @@ namespace catalogue {
 
 
 	private:
+		int GetDistanceBetweenStops(Stop* start, Stop* end) const;
+		int GetTrafficRoute(Bus* bus) const;
+		double GetCurvatureBus(Bus* bus) const;
+
 		std::deque<Stop> stops_;
 
 		std::unordered_map<std::string, Stop*> stopname_to_stop;
@@ -114,6 +105,18 @@ namespace catalogue {
 		std::unordered_map<std::pair<Stop*, Stop*>, int, PairOfStopsPtrHasher> stops_to_distances;
 
 	};
+
+	/// <summary>
+	/// Add request to data base
+	/// </summary>
+	void AddInputRequest(const std::vector<input::IntputRequest>& request, TransportCatalogue& catalogue);
+
+	/// <summary>
+	/// Get input from stream, parse, write to catalogue.
+	/// </summary>
+	/// <param name="input"></param>
+	/// <param name="catalogue"></param>
+	void WriteInputToCatalogue(std::istream& input, TransportCatalogue& catalogue);
 
 }
 

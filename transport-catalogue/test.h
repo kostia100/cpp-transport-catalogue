@@ -17,9 +17,9 @@ namespace catalogue {
         void TestAddFindStop() {
             TransportCatalogue tc;
 
-            tc.AddStop({ "A", { 11, 28 } });
-            tc.AddStop({ "B", { 33, 45 } });
-            tc.AddStop({ "C", { 52, 64 } });
+            tc.AddStop( "A",  11, 28  );
+            tc.AddStop( "B",  33, 45 );
+            tc.AddStop( "C",  52, 64 );
 
             {
                 Stop* st_ptr = tc.FindStop("A");
@@ -48,13 +48,13 @@ namespace catalogue {
         void TestAddFindBus() {
             TransportCatalogue tc;
 
-            tc.AddStop({ "A", { 11, 28 } });
-            tc.AddStop({ "B", { 33, 45 } });
-            tc.AddStop({ "C", { 52, 64 } });
+            tc.AddStop( "A",  11, 28 );
+            tc.AddStop( "B",  33, 45 );
+            tc.AddStop( "C",  52, 64 );
 
-            tc.AddBus({ "bus1", {"A","B","C","B","A"} });
-            tc.AddBus({ "bus2", {"A","B","A"} });
-            tc.AddBus({ "bus3", {"C","B","C"} });
+            tc.AddBus( "bus1", {"A","B","C","B","A"} );
+            tc.AddBus( "bus2", {"A","B","A"} );
+            tc.AddBus( "bus3", {"C","B","C"} );
 
             {
                 Bus* bus_ptr1 = tc.FindBus("bus1");
@@ -139,14 +139,14 @@ namespace catalogue {
         void TestRequestBusData() {
             TransportCatalogue tc;
 
-            tc.AddStop({ "A", { 0, 28 } });
-            tc.AddStop({ "B", { 0, 45 } });
-            tc.AddStop({ "C", { 52, 64 } });
+            tc.AddStop( "A", 0, 28 );
+            tc.AddStop( "B",  0, 45 );
+            tc.AddStop( "C",  52, 64 );
 
 
-            tc.AddBus({ "bus1", {"A","B","C","B","A"} });
-            tc.AddBus({ "bus2", {"A","B","A"} });
-            tc.AddBus({ "bus3", {"C","B","C"} });
+            tc.AddBus( "bus1", {"A","B","C","B","A"} );
+            tc.AddBus( "bus2", {"A","B","A"} );
+            tc.AddBus( "bus3", {"C","B","C"} );
 
             StopInputData data1{ "A",{0,0} ,{{"B",50}, {"C",100}} };
             StopInputData data2{ "B",{0,0} ,{ {"C",250} } };
@@ -184,16 +184,16 @@ namespace catalogue {
         void TestRequestStopData() {
             TransportCatalogue tc;
 
-            tc.AddStop({ "Aa", { 0, 28 } });
-            tc.AddStop({ "Bb", { 0, 45 } });
-            tc.AddStop({ "Cc C", { 52, 64 } });
-            tc.AddStop({ "ZZZ", { 52, 64 } });
+            tc.AddStop( "Aa",  0, 28 );
+            tc.AddStop( "Bb",  0, 45 );
+            tc.AddStop( "Cc C",  52, 64);
+            tc.AddStop( "ZZZ",  52, 64 );
 
 
 
-            tc.AddBus({ "ba125", {"Aa","Bb","Cc C","Bb","Aa"} });
-            tc.AddBus({ "ba023", {"Aa","Bb","Aa"} });
-            tc.AddBus({ "bb963", {"Cc C","Bb","Cc C"} });
+            tc.AddBus( "ba125", {"Aa","Bb","Cc C","Bb","Aa"} );
+            tc.AddBus( "ba023", {"Aa","Bb","Aa"} );
+            tc.AddBus( "bb963", {"Cc C","Bb","Cc C"} );
             {
                 std::vector<OutputRequest> request = { { OutputType::STOP , { "Aa" } } };
                 std::ostringstream out;
@@ -258,13 +258,13 @@ namespace catalogue {
         void TestComputeTrafficDistance() {
             TransportCatalogue tc;
 
-            tc.AddStop({ "A", { 0, 0 } });
-            tc.AddStop({ "B", { 1, 0 } });
-            tc.AddStop({ "C", { 2, 0 } });
+            tc.AddStop( "A",  0, 0 );
+            tc.AddStop( "B",  1, 0 );
+            tc.AddStop( "C",  2, 0 );
 
-            tc.AddBus({ "bus1", {"A","B","C","B","A"} });
-            tc.AddBus({ "bus2", {"A","B","A"} });
-            tc.AddBus({ "bus3", {"C","B","C"} });
+            tc.AddBus( "bus1", {"A","B","C","B","A"} );
+            tc.AddBus( "bus2", {"A","B","A"} );
+            tc.AddBus( "bus3", {"C","B","C"} );
 
             StopInputData stp1{ "A",{0,0} ,{{"B",50}, {"C",100}} };
             StopInputData stp2{ "B",{0,0} ,{ {"C",250} } };
@@ -273,23 +273,23 @@ namespace catalogue {
 
             Bus* ptr1 = tc.FindBus("bus1");
             assert(ptr1 != nullptr);
-            int resultBus1 = tc.GetTrafficRoute(ptr1);
+            int resultBus1 =  tc.GetBusInfo("bus1").traffic_route_length;
             int targetBus1 = 600; // 50 + 250 +250 +50 = 600
             assert(targetBus1 == resultBus1);
 
             Bus* ptr2 = tc.FindBus("bus2");
             assert(ptr2 != nullptr);
-            int resultBus2 = tc.GetTrafficRoute(ptr2);
+            int resultBus2 = tc.GetBusInfo("bus2").traffic_route_length;
             int targetBus2 = 100; // 50 + 50 = 100
             assert(targetBus2 == resultBus2);
 
 
-            tc.AddStop({ "Z", { 2, 0 } });
-            tc.AddBus({ "busZ", {"Z","Z"} });
+            tc.AddStop( "Z",  2, 0 );
+            tc.AddBus( "busZ", {"Z","Z"} );
             StopInputData stpZ{ "Z",{0,0} ,{ {"Z",123} } };
             tc.AddNearestStops(stpZ);
             Bus* ptrZ = tc.FindBus("busZ");
-            int resultBusZ = tc.GetTrafficRoute(ptrZ);
+            int resultBusZ = tc.GetBusInfo("busZ").traffic_route_length;
             int targetBusZ = 123; // 123 !
             assert(targetBusZ == resultBusZ);
         }
@@ -301,13 +301,13 @@ namespace catalogue {
             Coordinates cB{ 14.2, 56.69 };
             Coordinates cC{ 23.89, 42.36 };
 
-            tc.AddStop({ "A", { 10.5, 12.3 } });
-            tc.AddStop({ "B", { 14.2, 56.69 } });
-            tc.AddStop({ "C", { 23.89, 42.36 } });
+            tc.AddStop( "A",  10.5, 12.3 );
+            tc.AddStop( "B",  14.2, 56.69 );
+            tc.AddStop( "C",  23.89, 42.36 );
 
-            tc.AddBus({ "bus1", {"A","B","C","B","A"} });
-            tc.AddBus({ "bus2", {"A","B","A"} });
-            tc.AddBus({ "bus3", {"C","B","C"} });
+            tc.AddBus( "bus1", {"A","B","C","B","A"} );
+            tc.AddBus( "bus2", {"A","B","A"} );
+            tc.AddBus( "bus3", {"C","B","C"} );
 
             StopInputData stp1{ "A",{0,0} ,{{"B",5000}, {"C",10000}} };
             StopInputData stp2{ "B",{0,0} ,{ {"C",25000} } };
@@ -316,7 +316,7 @@ namespace catalogue {
 
             Bus* ptr1 = tc.FindBus("bus1");
             assert(ptr1 != nullptr);
-            double resultCruvature = tc.GetCurvatureBus(ptr1);
+            double resultCruvature = tc.GetBusInfo("bus1").curvature;
             int targetTrafficDistance = 60000; // 50 + 250 +250 +50 = 600
             double dAB = ComputeDistance(cA, cB);
             double dBC = ComputeDistance(cB, cC);
