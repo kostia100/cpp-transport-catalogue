@@ -24,8 +24,7 @@ namespace catalogue {
 
 
 
-	void TransportCatalogue::AddStop(std::string stop_name, double coordX, double coordY) {
-		Coordinates crd = { coordX,coordY };
+	void TransportCatalogue::AddStop(std::string stop_name, geography::Coordinates crd) {
 		Stop stop = { stop_name, crd };
 		stops_.push_back(stop);
 		Stop* ptr_stop = &stops_.back();
@@ -36,7 +35,7 @@ namespace catalogue {
 
 
 
-	void TransportCatalogue::AddBus(std::string name_bus, std::vector<std::string> names_stops) {
+	void TransportCatalogue::AddBus(std::string name_bus, const std::vector<std::string>& names_stops) {
 		std::vector<Stop*> bus_stops;
 		for (const auto stop : names_stops) {
 			bus_stops.push_back(stopname_to_stop[stop]);
@@ -84,14 +83,11 @@ namespace catalogue {
 		}
 	}
 
-	void TransportCatalogue::AddNearestStops(input::StopInputData data) {
-		Stop* base_stop = stopname_to_stop[data.name];
-		for (const auto& stp : data.connected_stop) {
-			Stop* nearby_stop = stopname_to_stop.at(stp.first);
-			int distance = stp.second;
-			stops_to_distances.insert({ {base_stop,nearby_stop}, distance });
-		}
 
+	void TransportCatalogue::AddNearestStops(std::string stop_start, std::string stop_end, int distance) {
+		Stop* stop_start_ptr = stopname_to_stop[stop_start];
+		Stop* stop_end_ptr = stopname_to_stop[stop_end];
+		stops_to_distances.insert({ {stop_start_ptr,stop_end_ptr}, distance });
 	}
 
 
@@ -140,37 +136,7 @@ namespace catalogue {
 	}
 
 
-	void AddInputRequest(const std::vector<input::IntputRequest>& requests, TransportCatalogue& catalogue) {
 
-		for (const auto& r : requests) {
-			if (r.type == input::InputType::STOP) {
-				input::StopInputData stop = input::ParseStopData(r.text);
-				catalogue.AddStop(stop.name, stop.coordinates.first, stop.coordinates.second);
-			}
-		}
-
-		for (const auto& r : requests) {
-			if (r.type == input::InputType::STOP) {
-				input::StopInputData stop = input::ParseStopData(r.text);
-				catalogue.AddNearestStops(stop);
-			}
-		}
-
-
-
-		for (const auto& r : requests) {
-			if (r.type == input::InputType::BUS) {
-				auto bus = input::ParseBusData(r.text);
-				catalogue.AddBus(bus.first, bus.second);
-			}
-		}
-
-	}
-
-	void WriteInputToCatalogue(std::istream& input, TransportCatalogue& catalogue) {
-		std::vector<input::IntputRequest> requests_input = input::ReadInputRequests(std::cin);
-		AddInputRequest(requests_input, catalogue);
-	}
 
 }
 

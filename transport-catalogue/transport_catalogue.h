@@ -9,7 +9,6 @@
 #include <map>
 #include <set>
 #include "geo.h"
-#include "input_reader.h"
 
 
 
@@ -71,24 +70,23 @@ namespace catalogue {
 		std::set<std::string> buses;
 	};
 
-	
+
 
 	class TransportCatalogue {
 	public:
-		void AddStop(std::string stop_name, double coordX , double coordY);
-		void AddBus(std::string name_bus, std::vector<std::string> names_stops);
+		void AddStop(std::string stop_name, geography::Coordinates crd);
+		void AddBus(std::string name_bus, const std::vector<std::string>& names_stops);
 
-		void AddNearestStops(input::StopInputData data);
+		void AddNearestStops(std::string stop_start, std::string stop_end, int distance);
 
 		Stop* FindStop(const std::string& stop) const;
 		Bus* FindBus(const std::string& bus) const;
 
 		BusInfo GetBusInfo(const std::string& bus) const;
 		StopInfo GetStopInfo(const std::string& stop) const;
-
+		int GetDistanceBetweenStops(Stop* start, Stop* end) const;
 
 	private:
-		int GetDistanceBetweenStops(Stop* start, Stop* end) const;
 		int GetTrafficRoute(Bus* bus) const;
 		double GetCurvatureBus(Bus* bus) const;
 
@@ -105,18 +103,6 @@ namespace catalogue {
 		std::unordered_map<std::pair<Stop*, Stop*>, int, PairOfStopsPtrHasher> stops_to_distances;
 
 	};
-
-	/// <summary>
-	/// Add request to data base
-	/// </summary>
-	void AddInputRequest(const std::vector<input::IntputRequest>& request, TransportCatalogue& catalogue);
-
-	/// <summary>
-	/// Get input from stream, parse, write to catalogue.
-	/// </summary>
-	/// <param name="input"></param>
-	/// <param name="catalogue"></param>
-	void WriteInputToCatalogue(std::istream& input, TransportCatalogue& catalogue);
 
 }
 

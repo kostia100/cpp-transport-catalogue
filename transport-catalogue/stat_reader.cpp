@@ -5,7 +5,7 @@
 
 namespace catalogue {
 
-	namespace requests {
+	namespace request {
 
 		std::ostream& operator<<(std::ostream& out, const StopInfo& info) {
 			out << "Stop " << info.stop_name << ": ";
@@ -38,8 +38,7 @@ namespace catalogue {
 		}
 
 
-		std::vector<OutputRequest> ReadStatRequest(std::istream& input) {
-			std::vector<OutputRequest> request;
+		void GetDataFromCatalogue(std::istream& input, std::ostream& out, TransportCatalogue& catalogue) {
 
 			int request_number;
 			input >> request_number;
@@ -53,21 +52,19 @@ namespace catalogue {
 
 				std::string request_type = line.substr(0, 3);
 				if (request_type == "Bus") {
-					std::string name = line.substr(4, std::string::npos);
-					request.push_back({ OutputType::BUS , catalogue::input::detail::Trim(name) });
+					std::string request_data = line.substr(4, std::string::npos);
+					std::string bus_name = catalogue::input::detail::Trim(request_data);
+					out << catalogue.GetBusInfo(bus_name) << std::endl;
 				}
 				else if (request_type == "Sto") {
-					std::string name = line.substr(5, std::string::npos);
-					request.push_back({ OutputType::STOP , catalogue::input::detail::Trim(name) });
+					std::string request_data = line.substr(5, std::string::npos);
+					std::string stop_name = catalogue::input::detail::Trim(request_data);
+					out << catalogue.GetStopInfo(stop_name) << std::endl;
 				}
 
 				++r;
 			}
-
-
-			return request;
 		}
-
 
 
 		std::ostream& GetStats(std::ostream& out, std::vector<OutputRequest> request, TransportCatalogue& catalogue) {
@@ -84,35 +81,7 @@ namespace catalogue {
 			}
 			return out;
 		}
-
-
-		void GetRequestFromCatalogue(std::istream& input, std::ostream& out, TransportCatalogue& catalogue) {
-
-			int request_number;
-			input >> request_number;
-
-			std::string line;
-			getline(input, line);
-
-			int r = 1;
-			while (r <= request_number) {
-				getline(input, line);
-
-				std::string request_type = line.substr(0, 3);
-				if (request_type == "Bus") {
-					std::string request_data = line.substr(4, std::string::npos);
-					std::string bus_name =  catalogue::input::detail::Trim(request_data) ;
-					out << catalogue.GetBusInfo(bus_name) << std::endl;
-				}
-				else if (request_type == "Sto") {
-					std::string request_data = line.substr(5, std::string::npos);
-					std::string stop_name = catalogue::input::detail::Trim(request_data) ;
-					out << catalogue.GetStopInfo(stop_name) << std::endl;
-				}
-
-				++r;
-			}
-		}
+		
 
 	}
 

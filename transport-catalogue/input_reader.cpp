@@ -42,7 +42,7 @@ namespace catalogue {
 
 		}
 
-
+		
 		std::vector<IntputRequest> ReadInputRequests(std::istream& input) {
 			int request_number;
 			input >> request_number;
@@ -69,6 +69,7 @@ namespace catalogue {
 
 			return requests;
 		}
+		
 
 
 
@@ -140,6 +141,43 @@ namespace catalogue {
 			return { bus_name , stops };
 		}
 		
+
+		void AddInputRequest(const std::vector<input::IntputRequest>& requests, TransportCatalogue& catalogue) {
+
+			for (const auto& r : requests) {
+				if (r.type == input::InputType::STOP) {
+					input::StopInputData stop = input::ParseStopData(r.text);
+					catalogue.AddStop(stop.name, { stop.coordinates.first, stop.coordinates.second });
+				}
+			}
+
+			for (const auto& r : requests) {
+				if (r.type == input::InputType::STOP) {
+					input::StopInputData stop = input::ParseStopData(r.text);
+					//catalogue.AddNearestStops(stop.name,stop.connected_stop);
+					for (auto stop_end : stop.connected_stop) {
+						catalogue.AddNearestStops( stop.name , stop_end.first,  stop_end.second);
+					}
+				}
+			}
+
+
+
+			for (const auto& r : requests) {
+				if (r.type == input::InputType::BUS) {
+					auto bus = input::ParseBusData(r.text);
+					catalogue.AddBus(bus.first, bus.second);
+				}
+			}
+
+		}
+
+		void SetDataToCatalogue(std::istream& input, TransportCatalogue& catalogue) {
+			std::vector<input::IntputRequest> requests_input = input::ReadInputRequests(std::cin);
+			AddInputRequest(requests_input, catalogue);
+		}
+
+
 
 	}
 

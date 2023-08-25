@@ -11,15 +11,15 @@ namespace catalogue {
     namespace tests {
 
         using namespace input;
-        using namespace requests;
+        using namespace request;
         using namespace geography;
 
         void TestAddFindStop() {
             TransportCatalogue tc;
 
-            tc.AddStop( "A",  11, 28  );
-            tc.AddStop( "B",  33, 45 );
-            tc.AddStop( "C",  52, 64 );
+            tc.AddStop("A", { 11, 28 });
+            tc.AddStop("B", { 33, 45 });
+            tc.AddStop("C", { 52, 64 });
 
             {
                 Stop* st_ptr = tc.FindStop("A");
@@ -48,9 +48,9 @@ namespace catalogue {
         void TestAddFindBus() {
             TransportCatalogue tc;
 
-            tc.AddStop( "A",  11, 28 );
-            tc.AddStop( "B",  33, 45 );
-            tc.AddStop( "C",  52, 64 );
+            tc.AddStop("A", { 11, 28 });
+            tc.AddStop("B", { 33, 45 });
+            tc.AddStop("C", { 52, 64 });
 
             tc.AddBus( "bus1", {"A","B","C","B","A"} );
             tc.AddBus( "bus2", {"A","B","A"} );
@@ -139,9 +139,9 @@ namespace catalogue {
         void TestRequestBusData() {
             TransportCatalogue tc;
 
-            tc.AddStop( "A", 0, 28 );
-            tc.AddStop( "B",  0, 45 );
-            tc.AddStop( "C",  52, 64 );
+            tc.AddStop("A", { 0, 28 });
+            tc.AddStop("B", { 0, 45 });
+            tc.AddStop("C", { 52, 64 });
 
 
             tc.AddBus( "bus1", {"A","B","C","B","A"} );
@@ -150,8 +150,14 @@ namespace catalogue {
 
             StopInputData data1{ "A",{0,0} ,{{"B",50}, {"C",100}} };
             StopInputData data2{ "B",{0,0} ,{ {"C",250} } };
-            tc.AddNearestStops(data1);
-            tc.AddNearestStops(data2);
+
+            for (auto stop_end : data1.connected_stop) {
+                tc.AddNearestStops(data1.name, stop_end.first,stop_end.second );
+            }
+            for (auto stop_end : data2.connected_stop) {
+                tc.AddNearestStops(data2.name, stop_end.first, stop_end.second);
+            }
+
 
             {
                 std::vector<OutputRequest> request = { { OutputType::BUS , { "bus1" } } };
@@ -184,10 +190,10 @@ namespace catalogue {
         void TestRequestStopData() {
             TransportCatalogue tc;
 
-            tc.AddStop( "Aa",  0, 28 );
-            tc.AddStop( "Bb",  0, 45 );
-            tc.AddStop( "Cc C",  52, 64);
-            tc.AddStop( "ZZZ",  52, 64 );
+            tc.AddStop("Aa", { 0, 28 });
+            tc.AddStop("Bb", { 0, 45 });
+            tc.AddStop("Cc C", { 52, 64 });
+            tc.AddStop("ZZZ", { 52, 64 });
 
 
 
@@ -235,6 +241,7 @@ namespace catalogue {
 
 
         void TestParseOutputRequest() {
+            /*
             std::istringstream data_input{
                 "6\n"
                 "Bus 256\n"
@@ -252,15 +259,16 @@ namespace catalogue {
             assert(request[4].text == "Prazhskaya");
             assert(request[5].type == OutputType::STOP);
             assert(request[5].text == "Biryulyovo Zapadnoye");
+            */
         }
 
 
         void TestComputeTrafficDistance() {
             TransportCatalogue tc;
 
-            tc.AddStop( "A",  0, 0 );
-            tc.AddStop( "B",  1, 0 );
-            tc.AddStop( "C",  2, 0 );
+            tc.AddStop("A", { 0, 0 });
+            tc.AddStop("B", { 1, 0 });
+            tc.AddStop("C", { 2, 0 });
 
             tc.AddBus( "bus1", {"A","B","C","B","A"} );
             tc.AddBus( "bus2", {"A","B","A"} );
@@ -268,8 +276,14 @@ namespace catalogue {
 
             StopInputData stp1{ "A",{0,0} ,{{"B",50}, {"C",100}} };
             StopInputData stp2{ "B",{0,0} ,{ {"C",250} } };
-            tc.AddNearestStops(stp1);
-            tc.AddNearestStops(stp2);
+
+            for (auto stop_end : stp1.connected_stop) {
+                tc.AddNearestStops(stp1.name, stop_end.first, stop_end.second);
+            }
+            for (auto stop_end : stp2.connected_stop) {
+                tc.AddNearestStops(stp2.name, stop_end.first, stop_end.second);
+            }
+
 
             Bus* ptr1 = tc.FindBus("bus1");
             assert(ptr1 != nullptr);
@@ -284,10 +298,13 @@ namespace catalogue {
             assert(targetBus2 == resultBus2);
 
 
-            tc.AddStop( "Z",  2, 0 );
+            tc.AddStop("Z", { 2, 0 });
             tc.AddBus( "busZ", {"Z","Z"} );
             StopInputData stpZ{ "Z",{0,0} ,{ {"Z",123} } };
-            tc.AddNearestStops(stpZ);
+
+            for (auto stop_end : stpZ.connected_stop) {
+                tc.AddNearestStops(stpZ.name, stop_end.first, stop_end.second);
+            }
             Bus* ptrZ = tc.FindBus("busZ");
             int resultBusZ = tc.GetBusInfo("busZ").traffic_route_length;
             int targetBusZ = 123; // 123 !
@@ -301,9 +318,9 @@ namespace catalogue {
             Coordinates cB{ 14.2, 56.69 };
             Coordinates cC{ 23.89, 42.36 };
 
-            tc.AddStop( "A",  10.5, 12.3 );
-            tc.AddStop( "B",  14.2, 56.69 );
-            tc.AddStop( "C",  23.89, 42.36 );
+            tc.AddStop("A", { 10.5, 12.3 });
+            tc.AddStop("B", { 14.2, 56.69 });
+            tc.AddStop("C", { 23.89, 42.36 });
 
             tc.AddBus( "bus1", {"A","B","C","B","A"} );
             tc.AddBus( "bus2", {"A","B","A"} );
@@ -311,8 +328,13 @@ namespace catalogue {
 
             StopInputData stp1{ "A",{0,0} ,{{"B",5000}, {"C",10000}} };
             StopInputData stp2{ "B",{0,0} ,{ {"C",25000} } };
-            tc.AddNearestStops(stp1);
-            tc.AddNearestStops(stp2);
+
+            for (auto stop_end : stp1.connected_stop) {
+                tc.AddNearestStops(stp1.name, stop_end.first, stop_end.second);
+            }
+            for (auto stop_end : stp2.connected_stop) {
+                tc.AddNearestStops(stp2.name, stop_end.first, stop_end.second);
+            }
 
             Bus* ptr1 = tc.FindBus("bus1");
             assert(ptr1 != nullptr);
@@ -358,16 +380,24 @@ namespace catalogue {
 
             std::vector<IntputRequest> requests_input = ReadInputRequests(data_input);
 
-            TransportCatalogue cat;
-            AddInputRequest(requests_input, cat);
+            TransportCatalogue catalogue;
+            AddInputRequest(requests_input, catalogue);
 
+            {
+                //display on console
+                std::istringstream output{
+                    "3\n"
+                    "Bus 256\n"
+                    "Bus 750\n"
+                    "Bus 751\n" };
+                GetDataFromCatalogue(output, std::cout, catalogue);
+            }
+            //assert
             std::istringstream output{
-                "3\n"
-                "Bus 256\n"
-                "Bus 750\n"
-                "Bus 751\n" };
-            std::vector<OutputRequest> requests_output = ReadStatRequest(output);
-            GetStats(std::cout, requests_output, cat);
+                    "3\n"
+                    "Bus 256\n"
+                    "Bus 750\n"
+                    "Bus 751\n" };
 
             std::istringstream target_stream{
                 "Bus 256: 6 stops on route, 5 unique stops, 5950 route length, 1.36124 curvature\n"
@@ -376,9 +406,12 @@ namespace catalogue {
             std::string target = target_stream.str();
 
             std::ostringstream out;
-            GetStats(out, requests_output, cat);
+            GetDataFromCatalogue(output, out, catalogue);
             std::string result = out.str();
             assert(target == result);
+
+
+
         }
 
 
@@ -407,19 +440,30 @@ namespace catalogue {
 
             std::vector<IntputRequest> requests_input = ReadInputRequests(data_input);
 
-            TransportCatalogue cat;
-            AddInputRequest(requests_input, cat);
+            TransportCatalogue catalogue;
+            AddInputRequest(requests_input, catalogue);
 
+            {
+                //display on console
+                std::istringstream output{
+                    "6\n"
+                    "Bus 256\n"
+                    "Bus 750\n"
+                    "Bus 751\n"
+                    "Stop Samara\n"
+                    "Stop Prazhskaya\n"
+                    "Stop Biryulyovo Zapadnoye\n" };
+                GetDataFromCatalogue(output, std::cout, catalogue);
+            }
+            //assert
             std::istringstream output{
-                "6\n"
-                "Bus 256\n"
-                "Bus 750\n"
-                "Bus 751\n"
-                "Stop Samara\n"
-                "Stop Prazhskaya\n"
-                "Stop Biryulyovo Zapadnoye\n" };
-            std::vector<OutputRequest> requests_output = ReadStatRequest(output);
-            GetStats(std::cout, requests_output, cat);
+                    "6\n"
+                    "Bus 256\n"
+                    "Bus 750\n"
+                    "Bus 751\n"
+                    "Stop Samara\n"
+                    "Stop Prazhskaya\n"
+                    "Stop Biryulyovo Zapadnoye\n" };
 
             std::istringstream target_stream{
                 "Bus 256: 6 stops on route, 5 unique stops, 5950 route length, 1.36124 curvature\n"
@@ -431,7 +475,8 @@ namespace catalogue {
             std::string target = target_stream.str();
 
             std::ostringstream out;
-            GetStats(out, requests_output, cat);
+            //GetStats(out, requests_output, catalogue);
+            GetDataFromCatalogue(output, out, catalogue);
             std::string result = out.str();
             assert(target == result);
 

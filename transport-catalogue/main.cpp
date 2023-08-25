@@ -23,11 +23,8 @@ int main()
 
     TransportCatalogue catalogue;
 
-    
-    WriteInputToCatalogue(std::cin, catalogue);
-    requests::GetRequestFromCatalogue(std::cin, std::cout, catalogue);
-    
+
+    input::SetDataToCatalogue(std::cin, catalogue);
+    request::GetDataFromCatalogue(std::cin, std::cout, catalogue);
+
 }
-
-
-

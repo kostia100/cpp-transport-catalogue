@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
-
+#include "transport_catalogue.h"
 
 namespace catalogue {
 
@@ -55,6 +55,19 @@ namespace catalogue {
 		/// Parse Bus text to bus_name + full stop route
 		/// </summary>
 		std::pair<std::string, std::vector<std::string>> ParseBusData(const std::string& text);
+
+
+		/// <summary>
+		/// Add request to data base
+		/// </summary>
+		void AddInputRequest(const std::vector<input::IntputRequest>& request, TransportCatalogue& catalogue);
+
+		/// <summary>
+		/// Reads input from istream, parse, write to catalogue.
+		/// </summary>
+		/// <param name="input"></param>
+		/// <param name="catalogue"></param>
+		void SetDataToCatalogue(std::istream& input, TransportCatalogue& catalogue);
 		
 
 	}
