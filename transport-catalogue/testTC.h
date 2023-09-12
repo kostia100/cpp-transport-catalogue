@@ -1,18 +1,16 @@
 #pragma once
 
 #include "transport_catalogue.h"
-#include "input_reader.h"
-#include "stat_reader.h"
+#include "request_handler.h"
 #include <cassert>
 #include <vector>
 
 namespace catalogue {
 
-    namespace tests {
+    namespace test {
 
         using namespace input;
-        using namespace request;
-        using namespace geography;
+        using namespace geo;
 
         void TestAddFindStop() {
             TransportCatalogue tc;
@@ -52,9 +50,9 @@ namespace catalogue {
             tc.AddStop("B", { 33, 45 });
             tc.AddStop("C", { 52, 64 });
 
-            tc.AddBus( "bus1", {"A","B","C","B","A"} );
-            tc.AddBus( "bus2", {"A","B","A"} );
-            tc.AddBus( "bus3", {"C","B","C"} );
+            tc.AddBus( "bus1", {"A","B","C","B","A"} ,"C");
+            tc.AddBus( "bus2", {"A","B","A"} ,"A");
+            tc.AddBus( "bus3", {"C","B","C"} ,"C");
 
             {
                 Bus* bus_ptr1 = tc.FindBus("bus1");
@@ -144,9 +142,9 @@ namespace catalogue {
             tc.AddStop("C", { 52, 64 });
 
 
-            tc.AddBus( "bus1", {"A","B","C","B","A"} );
-            tc.AddBus( "bus2", {"A","B","A"} );
-            tc.AddBus( "bus3", {"C","B","C"} );
+            tc.AddBus( "bus1", {"A","B","C","B","A"} ,"C");
+            tc.AddBus( "bus2", {"A","B","A"} ,"A");
+            tc.AddBus( "bus3", {"C","B","C"} ,"C");
 
             StopInputData data1{ "A",{0,0} ,{{"B",50}, {"C",100}} };
             StopInputData data2{ "B",{0,0} ,{ {"C",250} } };
@@ -197,9 +195,9 @@ namespace catalogue {
 
 
 
-            tc.AddBus( "ba125", {"Aa","Bb","Cc C","Bb","Aa"} );
-            tc.AddBus( "ba023", {"Aa","Bb","Aa"} );
-            tc.AddBus( "bb963", {"Cc C","Bb","Cc C"} );
+            tc.AddBus( "ba125", {"Aa","Bb","Cc C","Bb","Aa"} ,"Cc c");
+            tc.AddBus( "ba023", {"Aa","Bb","Aa"} ,"Aa");
+            tc.AddBus( "bb963", {"Cc C","Bb","Cc C"} , "Cc C");
             {
                 std::vector<OutputRequest> request = { { OutputType::STOP , { "Aa" } } };
                 std::ostringstream out;
@@ -270,9 +268,9 @@ namespace catalogue {
             tc.AddStop("B", { 1, 0 });
             tc.AddStop("C", { 2, 0 });
 
-            tc.AddBus( "bus1", {"A","B","C","B","A"} );
-            tc.AddBus( "bus2", {"A","B","A"} );
-            tc.AddBus( "bus3", {"C","B","C"} );
+            tc.AddBus( "bus1", {"A","B","C","B","A"} ,"C");
+            tc.AddBus( "bus2", {"A","B","A"} ,"A");
+            tc.AddBus( "bus3", {"C","B","C"} ,"C");
 
             StopInputData stp1{ "A",{0,0} ,{{"B",50}, {"C",100}} };
             StopInputData stp2{ "B",{0,0} ,{ {"C",250} } };
@@ -299,7 +297,7 @@ namespace catalogue {
 
 
             tc.AddStop("Z", { 2, 0 });
-            tc.AddBus( "busZ", {"Z","Z"} );
+            tc.AddBus( "busZ", {"Z","Z"} ,"Z");
             StopInputData stpZ{ "Z",{0,0} ,{ {"Z",123} } };
 
             for (auto stop_end : stpZ.connected_stop) {
@@ -322,9 +320,9 @@ namespace catalogue {
             tc.AddStop("B", { 14.2, 56.69 });
             tc.AddStop("C", { 23.89, 42.36 });
 
-            tc.AddBus( "bus1", {"A","B","C","B","A"} );
-            tc.AddBus( "bus2", {"A","B","A"} );
-            tc.AddBus( "bus3", {"C","B","C"} );
+            tc.AddBus( "bus1", {"A","B","C","B","A"} ,"C");
+            tc.AddBus( "bus2", {"A","B","A"} ,"A");
+            tc.AddBus( "bus3", {"C","B","C"} ,"C");
 
             StopInputData stp1{ "A",{0,0} ,{{"B",5000}, {"C",10000}} };
             StopInputData stp2{ "B",{0,0} ,{ {"C",25000} } };
@@ -378,7 +376,7 @@ namespace catalogue {
                    "Stop Rossoshanskaya ulitsa : 55.595579, 37.605757\n"
                    "Stop Prazhskaya : 55.611678, 37.603831\n" };
 
-            std::vector<IntputRequest> requests_input = ReadInputRequests(data_input);
+            std::vector<InputRequest> requests_input = ReadInputRequests(data_input);
 
             TransportCatalogue catalogue;
             AddInputRequest(requests_input, catalogue);
@@ -438,7 +436,7 @@ namespace catalogue {
                     "Stop Rossoshanskaya ulitsa : 55.595579, 37.605757\n"
                     "Stop Prazhskaya : 55.611678, 37.603831\n" };
 
-            std::vector<IntputRequest> requests_input = ReadInputRequests(data_input);
+            std::vector<InputRequest> requests_input = ReadInputRequests(data_input);
 
             TransportCatalogue catalogue;
             AddInputRequest(requests_input, catalogue);

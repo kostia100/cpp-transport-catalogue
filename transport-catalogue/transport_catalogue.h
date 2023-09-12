@@ -8,51 +8,17 @@
 #include <unordered_map>
 #include <map>
 #include <set>
-#include "geo.h"
+//#include "geo.h"
+#include "domain.h"
 
 
 
 namespace catalogue {
 
+	
+	/*
 	/// <summary>
-	/// Defines a stop.
-	/// </summary>
-	class Stop {
-	public:
-		std::string stop_name;
-		geography::Coordinates location;
-	};
-
-
-	/// <summary>
-	/// Hasher for a pair of Stop*
-	/// </summary>
-	struct PairOfStopsPtrHasher {
-		size_t operator()(std::pair<Stop*, Stop*> pair_ptr) const {
-			std::hash<const void*> ptr_hasher;
-			return ptr_hasher(pair_ptr.first) + 41 * ptr_hasher(pair_ptr.second);
-		}
-	};
-
-
-	/// <summary>
-	/// Defines a Bus
-	/// </summary>
-	class Bus {
-	public:
-		std::string bus_name;
-		std::vector<Stop*> stops;
-
-		double GetRouteGeoLength() const;
-
-		size_t CountUniqueStops() const;
-
-
-	};
-
-
-	/// <summary>
-	/// Info for request Bus
+	/// Output of a request "Bus"
 	/// </summary>
 	struct BusInfo {
 		bool bus_exists;
@@ -62,20 +28,31 @@ namespace catalogue {
 		int traffic_route_length;
 		double curvature;
 	};
+	*/
 
-
+	/*
+	/// <summary>
+	/// Output of request "Stop"
+	/// </summary>
 	struct StopInfo {
 		bool stop_exists;
 		std::string stop_name;
 		std::set<std::string> buses;
 	};
-
+	*/
 
 
 	class TransportCatalogue {
 	public:
-		void AddStop(std::string stop_name, geography::Coordinates crd);
-		void AddBus(std::string name_bus, const std::vector<std::string>& names_stops);
+		void AddStop(std::string stop_name, geo::Coordinates crd);
+
+		/// <summary>
+		/// Add Bus to TC. The end_stop is relevant only for DRAWING, not for calculations.
+		/// </summary>
+		/// <param name="name_bus"></param>
+		/// <param name="names_stops"></param>
+		/// <param name="end_stop"></param>
+		void AddBus(std::string name_bus, const std::vector<std::string>& names_stops, std::string end_stop);
 
 		void AddNearestStops(std::string stop_start, std::string stop_end, int distance);
 
@@ -85,6 +62,25 @@ namespace catalogue {
 		BusInfo GetBusInfo(const std::string& bus) const;
 		StopInfo GetStopInfo(const std::string& stop) const;
 		int GetDistanceBetweenStops(Stop* start, Stop* end) const;
+
+		/// <summary>
+		/// Return all Buses in alphabetical order.
+		/// </summary>
+		/// <returns></returns>
+		std::vector<Bus*> GetAllBuses() const;
+
+
+		/// <summary>
+		/// Return coordinates of stops that are in the network (are on a bus line).
+		/// </summary>
+		/// <returns></returns>
+		//std::vector<geo::Coordinates> GetStopsInNetwork() const;
+
+		/// <summary>
+		/// Return the Ptr on Stops in the Network, in ALPHABETICAL order
+		/// </summary>
+		/// <returns></returns>
+		std::vector<Stop*> GetStopsPtrInNetwork() const;
 
 	private:
 		int GetTrafficRoute(Bus* bus) const;

@@ -1,7 +1,9 @@
-#include "input_reader.h"
+#include "request_handler.h"
+
 #include <iostream>
 #include <sstream>
 #include <unordered_map>
+#include <iomanip>
 
 
 namespace catalogue {
@@ -42,12 +44,12 @@ namespace catalogue {
 
 		}
 
-		
-		std::vector<IntputRequest> ReadInputRequests(std::istream& input) {
+
+		std::vector<InputRequest> ReadInputRequests(std::istream& input) {
 			int request_number;
 			input >> request_number;
 
-			std::vector<IntputRequest> requests;
+			std::vector<InputRequest> requests;
 			std::string line;
 			getline(input, line);
 			int r = 1;
@@ -69,7 +71,7 @@ namespace catalogue {
 
 			return requests;
 		}
-		
+
 
 
 
@@ -140,9 +142,9 @@ namespace catalogue {
 
 			return { bus_name , stops };
 		}
-		
 
-		void AddInputRequest(const std::vector<input::IntputRequest>& requests, TransportCatalogue& catalogue) {
+
+		void AddInputRequest(const std::vector<input::InputRequest>& requests, TransportCatalogue& catalogue) {
 
 			for (const auto& r : requests) {
 				if (r.type == input::InputType::STOP) {
@@ -156,7 +158,7 @@ namespace catalogue {
 					input::StopInputData stop = input::ParseStopData(r.text);
 					//catalogue.AddNearestStops(stop.name,stop.connected_stop);
 					for (auto stop_end : stop.connected_stop) {
-						catalogue.AddNearestStops( stop.name , stop_end.first,  stop_end.second);
+						catalogue.AddNearestStops(stop.name, stop_end.first, stop_end.second);
 					}
 				}
 			}
@@ -166,16 +168,128 @@ namespace catalogue {
 			for (const auto& r : requests) {
 				if (r.type == input::InputType::BUS) {
 					auto bus = input::ParseBusData(r.text);
-					catalogue.AddBus(bus.first, bus.second);
+					//the next line is in Principle !!!FALSE!!!
+					catalogue.AddBus(bus.first, bus.second,bus.second[0]);
 				}
 			}
 
 		}
 
 		void SetDataToCatalogue(std::istream& input, TransportCatalogue& catalogue) {
-			std::vector<input::IntputRequest> requests_input = input::ReadInputRequests(std::cin);
+			std::vector<input::InputRequest> requests_input = input::ReadInputRequests(input);
 			AddInputRequest(requests_input, catalogue);
 		}
+
+
+
+		//----JSON----
+		void AddBaseRequests(
+			std::vector<input::StopInputData>stop_data,
+			std::vector<input::BusInputData> bus_data,
+			TransportCatalogue& catalogue) {
+
+			for (const auto& stop : stop_data) {
+				catalogue.AddStop(stop.name, { stop.coordinates.first, stop.coordinates.second });
+			}
+
+			for (const auto& stop : stop_data) {
+				for (auto stop_end : stop.connected_stop) {
+					catalogue.AddNearestStops(stop.name, stop_end.first, stop_end.second);
+				}
+			}
+
+			for (const auto& bus : bus_data) {
+				catalogue.AddBus(bus.name,bus.stops, bus.end_stop);
+			}
+		}
+
+
+
+		//-----------------------------------------------------------
+
+		std::ostream& operator<<(std::ostream& out, const StopInfo& info) {
+			out << "Stop " << info.stop_name << ": ";
+			if (!info.stop_exists) {
+				out << "not found";
+			}
+			else if (info.buses.size() == 0) {
+				out << "no buses";
+			}
+			else {
+				out << "buses";
+				for (auto& b : info.buses) {
+					out << " " << b;
+				}
+			}
+			return out;
+		}
+
+		std::ostream& operator<<(std::ostream& out, const BusInfo& info) {
+			out << "Bus " << info.bus_name << ": ";
+			if (info.bus_exists) {
+				out << info.all_stops << " stops on route, ";
+				out << info.unique_stops << " unique stops, ";
+				out << std::setprecision(6) << info.traffic_route_length << " route length, ";
+				out << std::setprecision(6) << info.curvature << " curvature";
+				return out;
+			}
+			out << "not found";
+			return out;
+		}
+
+
+		
+
+		//--------------------
+
+
+		void GetDataFromCatalogue(std::istream& input, std::ostream& out, TransportCatalogue& catalogue) {
+
+			int request_number;
+			input >> request_number;
+
+			std::string line;
+			getline(input, line);
+
+			int r = 1;
+			while (r <= request_number) {
+				getline(input, line);
+
+				std::string request_type = line.substr(0, 3);
+				if (request_type == "Bus") {
+					std::string request_data = line.substr(4, std::string::npos);
+					std::string bus_name = catalogue::input::detail::Trim(request_data);
+					out << catalogue.GetBusInfo(bus_name) << std::endl;
+				}
+				else if (request_type == "Sto") {
+					std::string request_data = line.substr(5, std::string::npos);
+					std::string stop_name = catalogue::input::detail::Trim(request_data);
+					out << catalogue.GetStopInfo(stop_name) << std::endl;
+				}
+
+				++r;
+			}
+		}
+
+
+		std::ostream& GetStats(std::ostream& out, std::vector<OutputRequest> request, TransportCatalogue& catalogue) {
+			for (const auto& r : request) {
+				if (r.type == OutputType::BUS) {
+					out << catalogue.GetBusInfo(r.text) << std::endl;
+				}
+				else if (r.type == OutputType::STOP) {
+					out << catalogue.GetStopInfo(r.text) << std::endl;
+				}
+				else {
+
+				}
+			}
+			return out;
+		}
+
+
+
+
 
 
 

@@ -5,26 +5,8 @@
 
 namespace catalogue {
 
-	using namespace geography;
 
-	double Bus::GetRouteGeoLength() const {
-		double route = 0.0;
-		for (int a = 0; a <= stops.size() - 2; ++a) {
-			Coordinates start = (*stops[a]).location;
-			Coordinates finish = (*stops[a + 1]).location;
-			route += ComputeDistance(start, finish);
-		}
-		return route;
-	}
-
-	size_t Bus::CountUniqueStops() const {
-		return std::set<Stop*>(stops.begin(), stops.end()).size();
-	}
-
-
-
-
-	void TransportCatalogue::AddStop(std::string stop_name, geography::Coordinates crd) {
+	void TransportCatalogue::AddStop(std::string stop_name, geo::Coordinates crd) {
 		Stop stop = { stop_name, crd };
 		stops_.push_back(stop);
 		Stop* ptr_stop = &stops_.back();
@@ -35,13 +17,13 @@ namespace catalogue {
 
 
 
-	void TransportCatalogue::AddBus(std::string name_bus, const std::vector<std::string>& names_stops) {
+	void TransportCatalogue::AddBus(std::string name_bus, const std::vector<std::string>& names_stops, std::string end_stop) {
 		std::vector<Stop*> bus_stops;
 		for (const auto stop : names_stops) {
 			bus_stops.push_back(stopname_to_stop[stop]);
 		}
-
-		buses_.push_back({ name_bus , bus_stops });
+		Stop* end_ptr = stopname_to_stop[end_stop];
+		buses_.push_back({ name_bus , bus_stops , end_ptr });
 		Bus* ptr_bus = &buses_.back();
 		busname_to_bus.insert({ name_bus,  ptr_bus });
 
@@ -94,7 +76,7 @@ namespace catalogue {
 	int TransportCatalogue::GetTrafficRoute(Bus* bus_ptr) const {
 		//Bus* bus_ptr = busname_to_bus.at(bus);
 		int route = 0;
-		for (int a = 0; a <= bus_ptr->stops.size() - 2; ++a) {
+		for (size_t a = 0; a <= bus_ptr->stops.size() - 2; ++a) {
 			route += GetDistanceBetweenStops(bus_ptr->stops[a], bus_ptr->stops[a + 1]);
 		}
 		return route;
@@ -105,6 +87,51 @@ namespace catalogue {
 		return GetTrafficRoute(bus_ptr) / (bus_ptr->GetRouteGeoLength());
 	}
 
+
+
+	std::vector<Bus*> TransportCatalogue::GetAllBuses() const {
+		std::vector<Bus*> buses;
+		std::set<std::string> bus_names;
+		for (auto elem : busname_to_bus) {
+			bus_names.insert(elem.first);
+		}
+		for (auto name : bus_names) {
+			buses.push_back(busname_to_bus.at(name));
+		}
+		return buses;
+	}
+
+
+	/*
+	std::vector<geo::Coordinates> TransportCatalogue::GetStopsInNetwork() const {
+		std::vector<geo::Coordinates> result;
+
+		for (const auto stp : stops_) {
+			//return only those stops that have a bus.
+			if ((stopname_to_busnames.at(stp.stop_name)).size() > 0) {
+				
+				result.push_back({ stp.location.lat,stp.location.lng });
+			}
+		}
+		return result;
+	}
+	*/
+
+	std::vector<Stop*> TransportCatalogue::GetStopsPtrInNetwork() const {
+		std::vector<Stop*> stops;
+		std::set<std::string> stop_names;
+
+		for (auto stp : stops_) {
+			if ((stopname_to_busnames.at(stp.stop_name)).size() > 0) {
+				stop_names.insert(stp.stop_name);
+			}
+
+		}
+		for (auto name : stop_names) {
+			stops.push_back(stopname_to_stop.at(name));
+		}
+		return stops;
+	}
 
 
 	BusInfo TransportCatalogue::GetBusInfo(const std::string& bus) const {
