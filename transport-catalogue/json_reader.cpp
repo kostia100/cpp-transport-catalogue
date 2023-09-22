@@ -1,4 +1,5 @@
 #include "json_reader.h"
+#include "json_builder.h"
 #include <fstream>
 #include <sstream>
 #include <filesystem>
@@ -23,7 +24,7 @@ namespace catalogue {
 		std::vector<input::BusInputData> result;
 		std::string end_stop;
 		for (auto elem : data) {
-			json::Dict dic = elem.AsMap();
+			json::Dict dic = elem.AsDict();
 
 			if (dic.at("type").AsString() == "Bus") {
 				std::string name = dic.at("name").AsString();
@@ -67,13 +68,13 @@ namespace catalogue {
 		json::Array data = node.AsArray();
 		std::vector<input::StopInputData> result;
 		for (auto elem : data ) {
-			json::Dict dic = elem.AsMap();
+			json::Dict dic = elem.AsDict();
 
 			if (dic.at("type").AsString() == "Stop") {
 				std::string name = dic.at("name").AsString();
 				std::pair<double, double> coord{ dic.at("latitude").AsDouble() ,dic.at("longitude").AsDouble() };
 				std::unordered_map<std::string, int> stops;
-				for (auto stop : dic.at("road_distances").AsMap()) {
+				for (auto stop : dic.at("road_distances").AsDict()) {
 					stops[stop.first] = stop.second.AsInt();
 				}
 				input::StopInputData info{ name,coord,stops };
@@ -88,7 +89,7 @@ namespace catalogue {
 		json::Array data = node.AsArray();
 		std::vector<input::JsonOutputRequest> result;
 		for (auto elem : data) {
-			json::Dict dic = elem.AsMap();
+			json::Dict dic = elem.AsDict();
 			if (dic.at("type").AsString() == "Stop") {
 				input::JsonOutputRequest output{ dic.at("id").AsInt(), input::OutputType::STOP , dic.at("name").AsString() };
 				result.push_back(output);
@@ -107,43 +108,59 @@ namespace catalogue {
 		return result;
 
 	}
+	
 
 	json::Node StopToNode(const StopInfo& stop, int index) {
-		json::Dict result;
-		result["request_id"] = index ;
+		using namespace std::literals;
 		if (!stop.stop_exists) {
-			std::string message = "not found";
-			result["error_message"] = message;
-			return result;
+			return json::Builder{}.StartDict()
+								  .Key("request_id"s).Value(index)
+								  .Key("error_message"s).Value("not found"s)
+							   	  .EndDict().Build();
 		}
 		json::Array buses;
 		for (auto bus : stop.buses) {
 			buses.push_back(bus);
 		}
-		result["buses"] = buses;
-		return result;
-	}
 
+		return json::Builder{}
+						.StartDict()
+						.Key("request_id"s).Value(index)
+						.Key("buses"s).Value(buses)
+						.EndDict().Build();
+		
+	}
+	
 	json::Node BusToNode(const BusInfo& bus, int index) {
-		json::Dict result;
-		result["request_id"] = index;
+		using namespace std::literals;
 		if (!bus.bus_exists) {
-			std::string message = "not found";
-			result["error_message"] = message;
-			return result;
+			return json::Builder{}
+							.StartDict()
+							.Key("request_id"s).Value(index)
+							.Key("error_message"s).Value("not found"s)
+							.EndDict().Build();
 		}
-		result["curvature"] = (double)bus.curvature;
-		result["route_length"] = (int)bus.traffic_route_length;
-		result["stop_count"] = (int)bus.all_stops;
-		result["unique_stop_count"] = (int)bus.unique_stops;
-		return result;
+		
+		return json::Builder{}
+			.StartDict()
+			.Key("request_id"s).Value(index)
+			.Key("curvature"s).Value((double)bus.curvature)
+			.Key("route_length"s).Value((int)bus.traffic_route_length)
+			.Key("stop_count"s).Value((int)bus.all_stops)
+			.Key("unique_stop_count"s).Value((int)bus.unique_stops)
+			.EndDict().Build();
 	}
+	
 
-	json::Node MapToNode(std::string network_map,  int index) {
-		json::Dict result;
-		result["request_id"] = index;
-		result["map"] = json::Node(network_map);
-		return result;
+	json::Node MapToNode(std::string network_map, int index) {
+		using namespace std::literals;
+		return json::Builder{}
+						.StartDict()
+						.Key("request_id"s).Value(index)
+						.Key("map"s).Value(network_map)
+						.EndDict().Build();
+					
+		
 	}
 
 	json::Node GetStatRequests(const std::vector<input::JsonOutputRequest>& requests, TransportCatalogue& catalogue) {
@@ -191,7 +208,7 @@ namespace catalogue {
 	void JSONInfoRequest(std::istream& input, std::ostream& output, TransportCatalogue& catalogue) {
 		json::Document doc = ReadJSON( input);
 		json::Node nd = doc.GetRoot();
-		std::map<std::string, json::Node> mp = nd.AsMap();
+		std::map<std::string, json::Node> mp = nd.AsDict();
 		json::Node base_requests_vector = mp.at("base_requests");
 		json::Node stat_requests_vector = mp.at("stat_requests");
 
@@ -208,7 +225,7 @@ namespace catalogue {
 
 	renderer::RendererParameters GetParametersFromNode(json::Node settings) {
 		renderer::RendererParameters params;
-		json::Dict rdr_settings = settings.AsMap();
+		json::Dict rdr_settings = settings.AsDict();
 		params.width = rdr_settings["width"].AsDouble();
 		params.height = rdr_settings["height"].AsDouble();
 		params.padding = rdr_settings["padding"].AsDouble();
@@ -273,7 +290,7 @@ namespace catalogue {
 	renderer::NetworkDrawingData JSONMapRequest(std::istream& input, TransportCatalogue& catalogue) {
 		json::Document docJSON = ReadJSON(input);
 		json::Node nd = docJSON.GetRoot();
-		std::map<std::string, json::Node> mp = nd.AsMap();
+		std::map<std::string, json::Node> mp = nd.AsDict();
 		json::Node base_requests_vector = mp.at("base_requests");
 		json::Node render_settings_map = mp.at("render_settings");
 
@@ -296,7 +313,7 @@ namespace catalogue {
 	void JSONRequest(std::istream& input, std::ostream& output, TransportCatalogue& catalogue) {
 		json::Document docJSON = ReadJSON(input);
 		json::Node nd = docJSON.GetRoot();
-		std::map<std::string, json::Node> mp = nd.AsMap();
+		std::map<std::string, json::Node> mp = nd.AsDict();
 		json::Node base_requests_vector = mp.at("base_requests");
 		json::Node render_settings_map = mp.at("render_settings");
 		json::Node stat_requests_vector = mp.at("stat_requests");

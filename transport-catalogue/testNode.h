@@ -72,7 +72,7 @@ namespace  json {
             assert(!null_node.IsPureDouble());
             assert(!null_node.IsString());
             assert(!null_node.IsArray());
-            assert(!null_node.IsMap());
+            assert(!null_node.IsDict());
 
             Node null_node1{ nullptr };
             assert(null_node1.IsNull());
@@ -181,8 +181,8 @@ namespace  json {
 
         void TestMap() {
             Node dict_node{ Dict{{"key1"s, "value1"s}, {"key2"s, 42}} };
-            assert(dict_node.IsMap());
-            const Dict& dict = dict_node.AsMap();
+            assert(dict_node.IsDict());
+            const Dict& dict = dict_node.AsDict();
             assert(dict.size() == 2);
             assert(dict.at("key1"s).AsString() == "value1"s);
             assert(dict.at("key2"s).AsInt() == 42);
@@ -224,7 +224,7 @@ namespace  json {
 
             Node array_node{ Array{} };
             MustThrowLogicError([&array_node] {
-                array_node.AsMap();
+                array_node.AsDict();
                 });
             MustThrowLogicError([&array_node] {
                 array_node.AsDouble();

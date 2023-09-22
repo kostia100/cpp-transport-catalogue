@@ -30,9 +30,10 @@ namespace catalogue {
 
 
 
-	json::Node StopToNode(const StopInfo& stop,int index);
 
-	json::Node BusToNode(const BusInfo& bus ,int index);
+	json::Node StopToNode(const StopInfo& stop, int index);
+
+	json::Node BusToNode(const BusInfo& bus, int index);
 
 	json::Node MapToNode(std::string network_map, int index);
 
