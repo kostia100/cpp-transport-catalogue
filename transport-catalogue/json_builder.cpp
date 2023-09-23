@@ -225,39 +225,19 @@ namespace json {
 
 	}
 
-	ValueArrayContext ArrayItemContext::Value(Node::Value value) {
-		return ValueArrayContext{ builder_.Value(value) };
+	ArrayItemContext ArrayItemContext::Value(Node::Value value) {
+		return ArrayItemContext{ builder_.Value(value) };
 	}
 
 	KeyItemContext::KeyItemContext(Builder& builder) : BaseContext(builder) {
 
 	}
 
-	ValueDictContext KeyItemContext::Value(Node::Value value) {
-		return ValueDictContext{ builder_.Value(value) };
-	}
-
-	
-	ValueDictContext::ValueDictContext(Builder& builder) : BaseContext(builder) {
-
-	}
-
-	ValueArrayContext::ValueArrayContext(Builder& builder) : BaseContext(builder){
-
-	}
-
-
-
-	ValueArrayContext ValueArrayContext::Value(Node::Value value) {
-		return ValueArrayContext{ builder_.Value(value) };
+	DictItemContext KeyItemContext::Value(Node::Value value) {
+		return DictItemContext{ builder_.Value(value) };
 	}
 	
 
 	//-----------------------------------------------
-
-	
-
-
-
 
 }
