@@ -10,9 +10,6 @@ namespace json {
 	class ArrayItemContext;
 	class KeyItemContext;
 
-	class ValueDictContext;
-	class ValueArrayContext;
-
 	Node BuildNode(Node::Value value);
 
 
@@ -37,10 +34,9 @@ namespace json {
 		Node Build();
 
 	private:
-		Node root_;
-		std::vector<Node*> nodes_stack_;
 		std::vector<std::variant<nullptr_t, std::string>> keys_;
-		std::deque<Node> all_nodes_;
+		Node root_;
+		std::deque<Node> nodes_;
 
 	};
 
@@ -53,8 +49,6 @@ namespace json {
 		Node Build();
 
 		KeyItemContext Key(std::string key);
-
-		//Builder& Value(Node::Value value);
 
 		DictItemContext StartDict();
 
@@ -94,13 +88,7 @@ namespace json {
 
 		ArrayItemContext Value(Node::Value value);
 
-		//DictItemContext StartDict();
-
-		//Builder& StartArray();
-
 		Builder& EndDict() = delete;
-
-		//Builder& EndArray();
 
 	};
 
@@ -113,12 +101,7 @@ namespace json {
 
 		KeyItemContext Key(std::string key) = delete;
 
-		//Builder& Value(Node::Value value);
 		DictItemContext Value(Node::Value value);
-
-		//DictItemContext StartDict();
-
-		//ArrayItemContext StartArray();
 
 		Builder& EndDict() = delete;
 
