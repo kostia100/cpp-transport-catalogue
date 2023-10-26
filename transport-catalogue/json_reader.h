@@ -4,6 +4,7 @@
 #include "request_handler.h"
 #include "map_renderer.h"
 #include <iostream>
+#include "transport_router.h"
 
 
 namespace catalogue {
@@ -23,8 +24,10 @@ namespace catalogue {
 
 	std::vector<input::JsonOutputRequest> GetStatRequestsFromJSON(json::Node node);
 
-
-
+	/// <summary>
+	/// Parse routing settings from a JSON.
+	/// </summary>
+	RoutingSettings GetRoutingSettings(json::Node node);
 
 	
 
@@ -37,12 +40,27 @@ namespace catalogue {
 
 	json::Node MapToNode(std::string network_map, int index);
 
+	/// <summary>
+	/// Transform a route-times (bus/wait) to std::vector of json::Node.
+	/// </summary>
+	json::Array RouteItemsToNode(std::vector<std::variant<WaitItem, BusItem>> input);
+
+	/// <summary>
+	/// transform a RouteInfo object into a json::Node
+	/// </summary>
+	json::Node RouteToNode(const TransportRouteInfo& route_info, int index);
+
 
 
 	json::Node GetStatRequests(const std::vector<input::JsonOutputRequest>& requests ,TransportCatalogue& catalogue);
 
 
-	json::Node GetStatWithMapRequests(const std::vector<input::JsonOutputRequest>& requests,renderer::NetworkDrawingData drawing_data,  TransportCatalogue& catalogue);
+	json::Node GetStatWithMapRequests(
+		const std::vector<input::JsonOutputRequest>& requests,
+		renderer::NetworkDrawingData drawing_data,
+		TransportCatalogue& catalogue,
+		TransportGraphWrapper& graph_wrapper,
+		graph::Router<double>& router);
 
 	/// <summary>
 	/// Parse JSON node to std::vector<int>.

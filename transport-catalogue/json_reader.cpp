@@ -86,20 +86,25 @@ namespace catalogue {
 	}
 
 	std::vector<input::JsonOutputRequest> GetStatRequestsFromJSON(json::Node node) {
+		using namespace std::literals;
 		json::Array data = node.AsArray();
 		std::vector<input::JsonOutputRequest> result;
 		for (auto elem : data) {
 			json::Dict dic = elem.AsDict();
-			if (dic.at("type").AsString() == "Stop") {
-				input::JsonOutputRequest output{ dic.at("id").AsInt(), input::OutputType::STOP , dic.at("name").AsString() };
+			if (dic.at("type"s).AsString() == "Stop"s) {
+				input::JsonOutputRequest output{ dic.at("id"s).AsInt(), input::OutputType::STOP , dic.at("name"s).AsString(), ""s ,""s };
 				result.push_back(output);
 			}
-			else if (dic.at("type").AsString() == "Bus") {
-				input::JsonOutputRequest output{ dic.at("id").AsInt(), input::OutputType::BUS , dic.at("name").AsString() };
+			else if (dic.at("type"s).AsString() == "Bus"s) {
+				input::JsonOutputRequest output{ dic.at("id"s).AsInt(), input::OutputType::BUS , dic.at("name"s).AsString() , ""s ,""s };
 				result.push_back(output);
 			}
-			else if (dic.at("type").AsString() == "Map") {
-				input::JsonOutputRequest output{ dic.at("id").AsInt(), input::OutputType::MAP , "" };
+			else if (dic.at("type"s).AsString() == "Map"s) {
+				input::JsonOutputRequest output{ dic.at("id").AsInt(), input::OutputType::MAP  , ""s , ""s ,""s };
+				result.push_back(output);
+			}
+			else if (dic.at("type").AsString() == "Route") {
+				input::JsonOutputRequest output{ dic.at("id").AsInt(), input::OutputType::ROUTE , ""s , dic.at("from").AsString(), dic.at("to").AsString() };
 				result.push_back(output);
 			}
 
@@ -107,6 +112,12 @@ namespace catalogue {
 
 		return result;
 
+	}
+
+	RoutingSettings GetRoutingSettings(json::Node settings) {
+		double velocity = settings.AsDict().at("bus_velocity").AsDouble();
+		double wait_time = settings.AsDict().at("bus_wait_time").AsInt();
+		return { velocity ,wait_time };
 	}
 	
 
@@ -163,16 +174,63 @@ namespace catalogue {
 		
 	}
 
+
+	json::Array RouteItemsToNode(std::vector<std::variant<WaitItem, BusItem>> input) {
+		using namespace std::literals;
+		json::Array items;
+		for (const auto elem : input) {
+			if (std::holds_alternative<WaitItem>(elem)) {
+				WaitItem val = std::get<WaitItem>(elem);
+				items.push_back(json::Builder{}
+					.StartDict()
+					.Key("stop_name"s).Value(val.stop_name)
+					.Key("time"s).Value(val.time)
+					.Key("type"s).Value("Wait"s)
+					.EndDict().Build());
+			}
+			else if (std::holds_alternative<BusItem>(elem)) {
+				BusItem val = std::get<BusItem>(elem);
+				items.push_back(json::Builder{}
+					.StartDict()
+					.Key("bus"s).Value(val.bus_name)
+					.Key("span_count"s).Value(val.span_count)
+					.Key("time"s).Value(val.time)
+					.Key("type"s).Value("Bus"s)
+					.EndDict().Build());
+			}
+		}
+		return items;
+	}
+
+	json::Node RouteToNode(const TransportRouteInfo& route_info, int index) {
+		using namespace std::literals;
+		if (!route_info.rout_exists) {
+			//route does not exist
+			return json::Builder{}
+				.StartDict()
+				.Key("request_id"s).Value(index)
+				.Key("error_message"s).Value("not found"s)
+				.EndDict().Build();
+		}
+		//route exist
+		return json::Builder{}
+						.StartDict()
+						.Key("request_id"s).Value(index)
+						.Key("total_time"s).Value(route_info.total_time)
+						.Key("items"s).Value(RouteItemsToNode(route_info.items))
+						.EndDict().Build();
+	}
+
 	json::Node GetStatRequests(const std::vector<input::JsonOutputRequest>& requests, TransportCatalogue& catalogue) {
 		json::Array result;
 		for (auto r : requests) {
 			if (r.type == input::OutputType::BUS) {
-				BusInfo info =  catalogue.GetBusInfo(r.text);
+				BusInfo info =  catalogue.GetBusInfo(r.name);
 				json::Node node_bus = BusToNode(info,r.index);
 				result.push_back(node_bus);
 			} 
 			else if (r.type == input::OutputType::STOP) {
-				StopInfo info = catalogue.GetStopInfo(r.text);
+				StopInfo info = catalogue.GetStopInfo(r.name);
 				json::Node node_stop = StopToNode(info, r.index);
 				result.push_back(node_stop);
 			}
@@ -181,16 +239,24 @@ namespace catalogue {
 	}
 
 
-	json::Node GetStatWithMapRequests(const std::vector<input::JsonOutputRequest>& requests, renderer::NetworkDrawingData drawing_data, TransportCatalogue& catalogue) {
+
+
+	json::Node GetStatWithMapRequests(
+		const std::vector<input::JsonOutputRequest>& requests,
+		renderer::NetworkDrawingData drawing_data,
+		TransportCatalogue& catalogue,
+		TransportGraphWrapper& graph_wrapper,
+		graph::Router<double>& router
+		) {
 		json::Array result;
 		for (auto r : requests) {
 			if (r.type == input::OutputType::BUS) {
-				BusInfo info = catalogue.GetBusInfo(r.text);
+				BusInfo info = catalogue.GetBusInfo(r.name);
 				json::Node node_bus = BusToNode(info, r.index);
 				result.push_back(node_bus);
 			}
 			else if (r.type == input::OutputType::STOP) {
-				StopInfo info = catalogue.GetStopInfo(r.text);
+				StopInfo info = catalogue.GetStopInfo(r.name);
 				json::Node node_stop = StopToNode(info, r.index);
 				result.push_back(node_stop);
 			}
@@ -199,6 +265,12 @@ namespace catalogue {
 				renderer::DrawNetworkMap(map_streamed, drawing_data);
 				json::Node map_node = MapToNode(map_streamed.str(),r.index);
 				result.push_back(map_node);
+			}
+			else if (r.type == input::OutputType::ROUTE) {
+				TransportRouteInfo output = graph_wrapper.FindRoute(router,{ catalogue.FindStop(r.start),catalogue.FindStop(r.end) });
+				//here compute with the Router the route
+				json::Node route_node = RouteToNode(output,r.index);
+				result.push_back(route_node);
 			}
 		}
 		return result;
@@ -316,21 +388,32 @@ namespace catalogue {
 		std::map<std::string, json::Node> mp = nd.AsDict();
 		json::Node base_requests_vector = mp.at("base_requests");
 		json::Node render_settings_map = mp.at("render_settings");
+		json::Node routing_settings = mp.at("routing_settings");
 		json::Node stat_requests_vector = mp.at("stat_requests");
 
 		std::vector<input::BusInputData> inputs_bus = GetBusRequestsFromJSON(base_requests_vector);
 		std::vector<input::StopInputData> inputs_stops = GetStopRequestsFromJSON(base_requests_vector);
+		//next method GetStatRequestsFromJSON needs to be completed
 		std::vector<input::JsonOutputRequest> requests = GetStatRequestsFromJSON(stat_requests_vector);
+
 		renderer::RendererParameters params = GetParametersFromNode(render_settings_map);
 
 
 		input::AddBaseRequests(inputs_stops, inputs_bus, catalogue);
 		
+		//construct graph with routing_settings + catalogue
+		RoutingSettings rt_settings = GetRoutingSettings(routing_settings);
 		std::vector<Bus*> buses = catalogue.GetAllBuses();
 		std::vector<Stop*> stopsPtr = catalogue.GetStopsPtrInNetwork();
 		renderer::NetworkDrawingData drawing_data{ buses,stopsPtr,  params };
 
-		json::Node output_node = GetStatWithMapRequests(requests, drawing_data, catalogue);
+		TransportGraphWrapper graph_wrapper(rt_settings, catalogue);
+		graph::DirectedWeightedGraph<double> graph =  graph_wrapper.BuildTransportGraph();
+		graph::Router router(graph);
+
+
+		//complete also the next method GetStatWithMapRequests
+		json::Node output_node = GetStatWithMapRequests(requests, drawing_data, catalogue, graph_wrapper,router);
 		output << Print(output_node);
 
 	}

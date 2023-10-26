@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 #include "transport_catalogue.h"
+#include "transport_router.h"
 
 
 
@@ -98,7 +99,8 @@ namespace catalogue {
 		enum class OutputType {
 			STOP,
 			BUS,
-			MAP
+			MAP,
+			ROUTE
 		};
 
 
@@ -114,9 +116,16 @@ namespace catalogue {
 		/// A JSON output request: same but with index
 		/// </summary>
 		struct JsonOutputRequest {
+			//index of the request
 			int index;
+			//type of the request
 			OutputType type;
-			std::string text;
+			//name of bus or stop if type = STOP / BUS
+			std::string name;
+			//start stop is type = ROUTE
+			std::string start;
+			//end stop is type = ROUTE
+			std::string end;
 		};
 
 

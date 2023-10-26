@@ -3,9 +3,6 @@
 
 namespace catalogue {
 
-
-
-
 	double Bus::GetRouteGeoLength() const {
 		double route = 0.0;
 		for (size_t a = 0; a <= stops.size() - 2; ++a) {
@@ -15,12 +12,13 @@ namespace catalogue {
 		}
 		return route;
 	}
-
 	
 	size_t Bus::CountUniqueStops() const {
 		return std::set<Stop*>(stops.begin(), stops.end()).size();
 	}
 
-	
+	bool Bus::IsRoundTrip() const {
+		return end_stop == *stops.begin();
+	}
 
 }

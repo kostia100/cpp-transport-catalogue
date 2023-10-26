@@ -40,8 +40,6 @@ namespace catalogue {
 		if (pos != stopname_to_stop.end()) {
 			return stopname_to_stop.at(stop);
 		}
-
-
 		return nullptr;
 	}
 
@@ -62,6 +60,74 @@ namespace catalogue {
 		else {
 			// if not, we assume that it is equal to end->start
 			return stops_to_distances.at({ end,start });
+		}
+	}
+
+
+
+
+
+	double TransportCatalogue::ConvertToTime(double distance, double velocity) {
+		return distance / velocity * 60 / 1000;
+	}
+
+	
+
+	std::vector<DirectDestination> TransportCatalogue::GetDirectDestinationsForRoundBus(const Bus* bus, const Stop* source, double velocity) const {
+		std::vector<DirectDestination> destinations;
+		std::vector<Stop*> line = bus->stops;
+		auto final_it = line.end();
+		--final_it;
+		
+		int occurence = count(line.begin(),line.end(),source);
+		
+		int departure = 1;
+
+		auto search_from = line.begin();
+
+		while(departure <= occurence){
+			++departure;
+			auto current = std::find(search_from, line.end(), source);
+			std::vector<DirectDestination> trips = GetDestinationsForwards(current, final_it, velocity);
+			std::copy(trips.begin(), trips.end(),back_inserter(destinations));
+			search_from = current;
+			++search_from;
+		}
+		
+		return destinations;
+	}
+
+	
+	
+
+	std::vector<DirectDestination> TransportCatalogue::GetDirectDestinationsForStraightBus(const Bus* bus, const Stop* source, double velocity) const {
+		std::vector<Stop*> line = bus->stops;
+		Stop* starting_stop = bus->stops[0];
+		auto start_it = std::find(line.begin(), line.end(), starting_stop);
+		auto final_it = start_it + bus->stops.size();
+
+		size_t mid = (bus->stops.size() - 1) / 2;
+
+		//this the second terminal location
+		auto mid_it = start_it + mid;
+		auto past_mid_it =mid_it+1;
+		auto current = std::find(line.begin(), line.end(), source);
+
+		std::vector<DirectDestination> destinations = GetDirectDestinationsInRange(start_it, past_mid_it, *current,velocity);
+		std::vector<DirectDestination> destinations_backward = GetDirectDestinationsInRange(mid_it, final_it, *current, velocity);
+		for (auto elem : destinations_backward) {
+			destinations.push_back(elem);
+		}
+		return destinations;
+	}
+
+
+	std::vector<DirectDestination> TransportCatalogue::GetDirectDestinations(const Bus* bus, const Stop* source , double velocity) const {
+		if (bus->IsRoundTrip()) {
+			return GetDirectDestinationsForRoundBus(bus,source,velocity);
+		}
+		else {
+			return GetDirectDestinationsForStraightBus(bus, source, velocity);
 		}
 	}
 
@@ -101,21 +167,6 @@ namespace catalogue {
 		return buses;
 	}
 
-
-	/*
-	std::vector<geo::Coordinates> TransportCatalogue::GetStopsInNetwork() const {
-		std::vector<geo::Coordinates> result;
-
-		for (const auto stp : stops_) {
-			//return only those stops that have a bus.
-			if ((stopname_to_busnames.at(stp.stop_name)).size() > 0) {
-				
-				result.push_back({ stp.location.lat,stp.location.lng });
-			}
-		}
-		return result;
-	}
-	*/
 
 	std::vector<Stop*> TransportCatalogue::GetStopsPtrInNetwork() const {
 		std::vector<Stop*> stops;

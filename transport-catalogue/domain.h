@@ -44,6 +44,8 @@ namespace catalogue {
 
 		size_t CountUniqueStops() const; 
 
+		bool IsRoundTrip() const;
+
 
 
 	};
