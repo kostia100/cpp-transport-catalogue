@@ -239,15 +239,12 @@ namespace catalogue {
 	}
 
 
-
-
 	json::Node GetStatWithMapRequests(
 		const std::vector<input::JsonOutputRequest>& requests,
 		renderer::NetworkDrawingData drawing_data,
 		TransportCatalogue& catalogue,
-		TransportGraphWrapper& graph_wrapper,
-		graph::Router<double>& router
-		) {
+		TransportGraphWrapper& graph_wrapper
+	) {
 		json::Array result;
 		for (auto r : requests) {
 			if (r.type == input::OutputType::BUS) {
@@ -263,13 +260,13 @@ namespace catalogue {
 			else if (r.type == input::OutputType::MAP) {
 				std::ostringstream map_streamed;
 				renderer::DrawNetworkMap(map_streamed, drawing_data);
-				json::Node map_node = MapToNode(map_streamed.str(),r.index);
+				json::Node map_node = MapToNode(map_streamed.str(), r.index);
 				result.push_back(map_node);
 			}
 			else if (r.type == input::OutputType::ROUTE) {
-				TransportRouteInfo output = graph_wrapper.FindRoute(router,{ catalogue.FindStop(r.start),catalogue.FindStop(r.end) });
+				TransportRouteInfo output = graph_wrapper.FindRoute( { catalogue.FindStop(r.start),catalogue.FindStop(r.end) });
 				//here compute with the Router the route
-				json::Node route_node = RouteToNode(output,r.index);
+				json::Node route_node = RouteToNode(output, r.index);
 				result.push_back(route_node);
 			}
 		}
@@ -408,12 +405,14 @@ namespace catalogue {
 		renderer::NetworkDrawingData drawing_data{ buses,stopsPtr,  params };
 
 		TransportGraphWrapper graph_wrapper(rt_settings, catalogue);
-		graph::DirectedWeightedGraph<double> graph =  graph_wrapper.BuildTransportGraph();
-		graph::Router router(graph);
 
+		//graph::DirectedWeightedGraph<double> graph =  graph_wrapper.BuildTransportGraph();
+		//graph::Router router(graph);
+		graph_wrapper.BuildTransportGraph();
 
 		//complete also the next method GetStatWithMapRequests
-		json::Node output_node = GetStatWithMapRequests(requests, drawing_data, catalogue, graph_wrapper,router);
+		//json::Node output_node = GetStatWithMapRequests(requests, drawing_data, catalogue, graph_wrapper,router);
+		json::Node output_node = GetStatWithMapRequests(requests, drawing_data, catalogue, graph_wrapper);
 		output << Print(output_node);
 
 	}

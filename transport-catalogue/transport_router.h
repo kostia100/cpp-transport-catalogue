@@ -1,10 +1,10 @@
 #pragma once
 
+#include <algorithm>
+#include <variant>
+#include <vector>
 #include "graph.h"
 #include "router.h"
-#include <vector>
-#include <variant>
-#include <algorithm>
 #include "transport_catalogue.h"
 
 
@@ -69,22 +69,36 @@ public:
 	
 	TransportGraphWrapper(RoutingSettings settings, catalogue::TransportCatalogue& tc);
 
+
 	/// <summary>
 	/// One stop => 2 vertex.
 	/// Even indexed vertex: "waiting time stops".
 	/// Odd indexed vertex: "bus connection stops".
 	/// </summary>
-	graph::DirectedWeightedGraph<double> BuildTransportGraph();
+	void BuildTransportGraph();
 
-	TransportRouteInfo FindRoute(const graph::Router<double>& router, RouteRequest request) const;
+	TransportRouteInfo FindRoute(RouteRequest request) const;
 
 private:
+	/// <summary>
+	/// Create graph with vertexes.
+	/// </summary>
+	void InitializeGraph();
 
-	graph::DirectedWeightedGraph<double> InitializeGraph() const;
+	/// <summary>
+	/// Add "Waiting" edges.
+	/// </summary>
+	void AddWaitingEdges();
 
-	void AddWaitingEdges(graph::DirectedWeightedGraph<double>& graph);
+	/// <summary>
+	/// Add Bus connections edges.
+	/// </summary>
+	void AddBusEdges();
 
-	void AddBusEdges(graph::DirectedWeightedGraph<double>& graph);
+	/// <summary>
+	/// Create router from graph.
+	/// </summary>
+	void InitializeRouter();
 
 
 	/// <summary>
@@ -105,7 +119,7 @@ private:
 	/// <summary>
 	/// Store info to retrieve VertexId from Stop*.
 	/// </summary>
-	std::map<catalogue::Stop*, graph::VertexId> stop_to_VertexId;
+	std::map<catalogue::Stop*, graph::VertexId> stop_to_vertexid;
 
 
 	/// <summary>
@@ -117,5 +131,11 @@ private:
 	/// Settings to compute the weights of the edges.
 	/// </summary>
 	RoutingSettings settings_ ;
+
+	
+	graph::DirectedWeightedGraph<double> network_graph_;
+
+	std::unique_ptr<graph::Router<double>> router_ptr_;
+
 
 };

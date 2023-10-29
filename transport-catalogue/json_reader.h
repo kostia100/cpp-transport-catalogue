@@ -59,8 +59,8 @@ namespace catalogue {
 		const std::vector<input::JsonOutputRequest>& requests,
 		renderer::NetworkDrawingData drawing_data,
 		TransportCatalogue& catalogue,
-		TransportGraphWrapper& graph_wrapper,
-		graph::Router<double>& router);
+		TransportGraphWrapper& graph_wrapper);
+
 
 	/// <summary>
 	/// Parse JSON node to std::vector<int>.
