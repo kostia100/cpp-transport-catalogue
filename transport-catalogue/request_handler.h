@@ -129,6 +129,7 @@ namespace catalogue {
 		};
 
 
+
 		std::ostream& operator<<(std::ostream& out, const StopInfo& stop);
 
 		std::ostream& operator<<(std::ostream& out, const BusInfo& bus);

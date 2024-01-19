@@ -9,6 +9,7 @@
 
 namespace catalogue {
 
+
 	/// <summary>
 	/// Parse JSON
 	/// </summary>
@@ -23,6 +24,8 @@ namespace catalogue {
 	std::vector<input::StopInputData> GetStopRequestsFromJSON(json::Node node);
 
 	std::vector<input::JsonOutputRequest> GetStatRequestsFromJSON(json::Node node);
+
+	std::string GetSerializationSettingFromJSON(json::Node node);
 
 	/// <summary>
 	/// Parse routing settings from a JSON.
@@ -108,7 +111,21 @@ namespace catalogue {
 	/// <param name="catalogue"></param>
 	void JSONRequest(std::istream& input, std::ostream& output, TransportCatalogue& catalogue);
 
+	/// <summary>
+	/// Read JSON, transform to TC and serialize to a .db file.
+	/// </summary>
+	/// <param name="input"></param>
+	/// <returns></returns>
+	void MakeBase(std::istream& input);
 
 
+
+	/// <summary>
+	/// Deserialize from .db file to TC and process requests.
+	/// </summary>
+	/// <param name="input"></param>
+	/// <param name="output"></param>
+	/// <param name="catalogue"></param>
+	void ProcessRequests(std::istream& input, std::ostream& output);
 
 }

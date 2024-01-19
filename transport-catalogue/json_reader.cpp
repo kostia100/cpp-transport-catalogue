@@ -1,5 +1,6 @@
 #include "json_reader.h"
 #include "json_builder.h"
+#include "serialization.h"
 #include <fstream>
 #include <sstream>
 #include <filesystem>
@@ -112,6 +113,11 @@ namespace catalogue {
 
 		return result;
 
+	}
+
+	std::string GetSerializationSettingFromJSON(json::Node node) {
+		json::Dict dic = node.AsDict();
+		return dic.at("file").AsString();
 	}
 
 	RoutingSettings GetRoutingSettings(json::Node settings) {
@@ -273,6 +279,33 @@ namespace catalogue {
 		return result;
 	}
 
+	json::Node GetRequests(
+		const std::vector<input::JsonOutputRequest>& requests,
+		renderer::NetworkDrawingData drawing_data,
+		TransportCatalogue& catalogue
+	) {
+		json::Array result;
+		for (auto r : requests) {
+			if (r.type == input::OutputType::BUS) {
+				BusInfo info = catalogue.GetBusInfo(r.name);
+				json::Node node_bus = BusToNode(info, r.index);
+				result.push_back(node_bus);
+			}
+			else if (r.type == input::OutputType::STOP) {
+				StopInfo info = catalogue.GetStopInfo(r.name);
+				json::Node node_stop = StopToNode(info, r.index);
+				result.push_back(node_stop);
+			}
+			else if (r.type == input::OutputType::MAP) {
+				std::ostringstream map_streamed;
+				renderer::DrawNetworkMap(map_streamed, drawing_data);
+				json::Node map_node = MapToNode(map_streamed.str(), r.index);
+				result.push_back(map_node);
+			}
+		}
+		return result;
+	}
+
 	
 	void JSONInfoRequest(std::istream& input, std::ostream& output, TransportCatalogue& catalogue) {
 		json::Document doc = ReadJSON( input);
@@ -406,15 +439,69 @@ namespace catalogue {
 
 		TransportGraphWrapper graph_wrapper(rt_settings, catalogue);
 
-		//graph::DirectedWeightedGraph<double> graph =  graph_wrapper.BuildTransportGraph();
-		//graph::Router router(graph);
 		graph_wrapper.BuildTransportGraph();
 
 		//complete also the next method GetStatWithMapRequests
-		//json::Node output_node = GetStatWithMapRequests(requests, drawing_data, catalogue, graph_wrapper,router);
 		json::Node output_node = GetStatWithMapRequests(requests, drawing_data, catalogue, graph_wrapper);
 		output << Print(output_node);
 
+	}
+
+
+	void MakeBase(std::istream& input_json) {
+		TransportCatalogue catalogue;
+		json::Document docJSON = ReadJSON(input_json);
+		json::Node nd = docJSON.GetRoot();
+		std::map<std::string, json::Node> mp = nd.AsDict();
+		json::Node base_requests_vector = mp.at("base_requests");
+		json::Node render_settings_map = mp.at("render_settings");
+		json::Node routing_settings = mp.at("routing_settings");
+		json::Node serialization_settings = mp.at("serialization_settings");
+
+		std::vector<input::BusInputData> inputs_bus = GetBusRequestsFromJSON(base_requests_vector);
+		std::vector<input::StopInputData> inputs_stops = GetStopRequestsFromJSON(base_requests_vector);
+		//next method GetStatRequestsFromJSON needs to be completed
+
+		input::AddBaseRequests(inputs_stops, inputs_bus, catalogue);
+		renderer::RendererParameters params = GetParametersFromNode(render_settings_map);
+		RoutingSettings routing = GetRoutingSettings(routing_settings);
+
+		//serialization to a .db file here
+		std::string storage_path = GetSerializationSettingFromJSON(serialization_settings);
+		std::ofstream myfile;
+		myfile.open(storage_path,std::ios::binary);
+
+		serialization::SerializeTransportSystem(catalogue, params, routing, myfile);
+	}
+
+
+	void ProcessRequests(std::istream& input, std::ostream& output) {
+		json::Document docJSON = ReadJSON(input);
+		json::Node nd = docJSON.GetRoot();
+		std::map<std::string, json::Node> mp = nd.AsDict();
+		json::Node stat_requests_vector = mp.at("stat_requests");
+		//here one extra setting
+		json::Node serialization_settings = mp.at("serialization_settings");
+		std::vector<input::JsonOutputRequest> requests = GetStatRequestsFromJSON(stat_requests_vector);
+
+		std::string storage_path = GetSerializationSettingFromJSON(serialization_settings);
+		std::ifstream myfile;
+		myfile.open(storage_path, std::ios::binary);
+		
+		renderer::RendererParameters params;
+		RoutingSettings routing;
+		TransportCatalogue catalogue = serialization::DeserializeTransportSystem(params, routing ,myfile);
+
+		std::vector<Bus*> buses = catalogue.GetAllBuses();
+		std::vector<Stop*> stopsPtr = catalogue.GetStopsPtrInNetwork();
+
+		TransportGraphWrapper graph_wrapper(routing, catalogue);
+		graph_wrapper.BuildTransportGraph();
+		
+		renderer::NetworkDrawingData drawing_data{ buses,stopsPtr,  params };
+
+		json::Node output_node = GetStatWithMapRequests(requests, drawing_data, catalogue, graph_wrapper);
+		output << Print(output_node);
 	}
 
 }

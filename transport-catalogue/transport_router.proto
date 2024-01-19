@@ -1,0 +1,12 @@
+//proto-file with router settings
+
+syntax = "proto3";
+
+
+package catalogue_serialize;
+
+
+message RouterParameters{
+	double velocity = 1;
+	double wait_time = 2;
+}

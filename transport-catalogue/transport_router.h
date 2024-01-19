@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <variant>
 #include <vector>
+#include <memory>
 #include "graph.h"
 #include "router.h"
 #include "transport_catalogue.h"

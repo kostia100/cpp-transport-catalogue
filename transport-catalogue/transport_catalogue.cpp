@@ -154,6 +154,163 @@ namespace catalogue {
 	}
 
 
+	std::unordered_map<std::string, int> TransportCatalogue::GetConnectedStops(const std::string& start) const {
+		std::unordered_map<std::string, int> connected_stops;
+		for (auto& [stops, distance] : stops_to_distances) {
+			if (start == stops.first->stop_name) {
+				connected_stops[stops.second->stop_name] = distance;
+			}
+		}
+		return connected_stops;
+	}
+
+	/*
+	void TransportCatalogue::SerializeTransportCatalogue(std::ostream& output) const {
+		catalogue_serialize::TransportCatalogue object;
+		//Serialize Stops
+		for(const Stop& stp : stops_){
+			//Serialize name
+			catalogue_serialize::Stop current_stop;
+			current_stop.set_name(stp.stop_name);
+
+			//Serialize coordinates
+			catalogue_serialize::Coordinates coord;
+			coord.set_lat(stp.location.lat);
+			coord.set_lng(stp.location.lng);
+
+			*current_stop.mutable_location() = coord;
+
+			//Serialize next stops
+			for (auto& [name, distance] : GetConnectedStops(stp.stop_name)) {
+				catalogue_serialize::NextStop nextstop;
+				nextstop.set_name(name);
+				nextstop.set_distance(distance);
+				current_stop.add_next()->CopyFrom(nextstop);
+			}
+
+			object.add_stop()->CopyFrom(current_stop);
+		}
+
+		//Serialize Bus
+		for (const Bus& bus : buses_) {
+			catalogue_serialize::Bus current_bus;
+			current_bus.set_name(bus.bus_name);
+			current_bus.set_end_stop(bus.end_stop->stop_name);
+
+			for (auto& stop_ptr : bus.stops) {
+				current_bus.add_stop(stop_ptr->stop_name);
+			}
+
+			object.add_bus()->CopyFrom(current_bus);
+		}
+		
+		//Serialize TransportCatalogue
+		object.SerializeToOstream(&output);
+	}
+	*/
+
+	const std::deque<Bus> TransportCatalogue::GetBuses() const {
+		return buses_;
+	}
+	const std::deque<Stop> TransportCatalogue::GetStops() const {
+		return stops_;
+	}
+
+	/*
+	void SerializeTransportCatalogue(const TransportCatalogue& catalogue, std::ostream& output) {
+		catalogue_serialize::TransportCatalogue object;
+		//Serialize Stops
+		for (const Stop& stp : catalogue.GetStops()) {
+			//Serialize name
+			catalogue_serialize::Stop current_stop;
+			current_stop.set_name(stp.stop_name);
+
+			//Serialize coordinates
+			catalogue_serialize::Coordinates coord;
+			coord.set_lat(stp.location.lat);
+			coord.set_lng(stp.location.lng);
+
+			*current_stop.mutable_location() = coord;
+
+			//Serialize next stops
+			for (auto& [name, distance] : catalogue.GetConnectedStops(stp.stop_name)) {
+				catalogue_serialize::NextStop nextstop;
+				nextstop.set_name(name);
+				nextstop.set_distance(distance);
+				current_stop.add_next()->CopyFrom(nextstop);
+			}
+
+			object.add_stop()->CopyFrom(current_stop);
+		}
+
+		//Serialize Bus
+		for (const Bus& bus : catalogue.GetBuses()) {
+			catalogue_serialize::Bus current_bus;
+			current_bus.set_name(bus.bus_name);
+			current_bus.set_end_stop(bus.end_stop->stop_name);
+
+			for (auto& stop_ptr : bus.stops) {
+				current_bus.add_stop(stop_ptr->stop_name);
+			}
+
+			object.add_bus()->CopyFrom(current_bus);
+		}
+
+		//Serialize TransportCatalogue
+		object.SerializeToOstream(&output);
+	}
+	*/
+
+
+	/*
+	TransportCatalogue DeserializeTransportCatalogue(std::istream& input) {
+		catalogue_serialize::TransportCatalogue object;
+		TransportCatalogue tc;
+		if(!object.ParseFromIstream(&input)){
+			return tc;
+		}
+		
+		std::vector<DeserializedStop> stops;
+		for (size_t q = 0; q < object.stop_size();++q) {
+			catalogue_serialize::Stop current = *object.mutable_stop(q);
+			catalogue_serialize::Coordinates coord = *current.mutable_location();
+			std::string stop_name = *current.mutable_name();
+			geo::Coordinates location{coord.lat(),coord.lng()};
+			
+			std::vector<std::pair<std::string, double>> connections;
+			for (size_t y = 0; y < current.next_size() ; ++y) {
+				catalogue_serialize::NextStop next = *current.mutable_next(y);
+				connections.push_back({ *next.mutable_name() , next.distance() });
+			}
+			DeserializedStop deserialzed_stop{ { stop_name ,{location} } ,connections };
+			stops.push_back(deserialzed_stop);
+		}
+		//
+
+		//Deserialize Buses and add to TC
+
+		std::vector<DeserializedBus> buses;
+		for (size_t q = 0; q < object.bus_size();++q) {
+			catalogue_serialize::Bus current_bus = *object.mutable_bus(q);
+			std::string bus_name = *current_bus.mutable_name();
+
+			std::vector<std::string> stops;
+			
+			for (size_t r = 0; r < current_bus.stop_size() ; ++r) {
+				stops.push_back(*current_bus.mutable_stop(r));
+			}
+
+			std::string end_stop = *current_bus.mutable_end_stop();;
+			buses.push_back({ bus_name ,stops,end_stop });
+		}
+
+		tc.AddInfoFromDeserializedData(stops, buses);
+
+		return tc;
+	}
+	*/
+	
+
 
 	std::vector<Bus*> TransportCatalogue::GetAllBuses() const {
 		std::vector<Bus*> buses;

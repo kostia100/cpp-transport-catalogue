@@ -1,0 +1,45 @@
+// main proto-file
+
+syntax = "proto3";
+
+import "map_renderer.proto";
+import "transport_router.proto";
+
+package catalogue_serialize;
+
+
+
+message Coordinates{
+	double lat = 1;
+	double lng = 2;
+}
+
+message NextStop {
+	string name = 1;
+	double distance = 2;
+}
+
+message Stop {
+	string name = 1;
+	Coordinates location = 2;
+	repeated NextStop next = 3;
+}
+
+message Bus {
+	string name = 1;
+	repeated string stop = 2;
+	string end_stop = 3;
+}
+
+
+message TransportCatalogue{
+	repeated Stop stop = 1;
+	repeated Bus bus = 2;
+}
+
+
+message TransportSystem{
+	TransportCatalogue catalogue = 1;
+	RendererParameters parameters =2;
+	RouterParameters routing = 3;
+}

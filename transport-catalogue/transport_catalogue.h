@@ -30,7 +30,6 @@ namespace catalogue {
 
 
 
-
 	class TransportCatalogue {
 	public:
 		void AddStop(std::string stop_name, geo::Coordinates crd);
@@ -76,6 +75,15 @@ namespace catalogue {
 		std::vector<DirectDestination> GetDirectDestinations(const Bus* bus, const Stop* source, double bus_speed) const;
 
 
+		const std::deque<Bus> GetBuses() const;
+		const std::deque<Stop> GetStops() const;
+
+		/// <summary>
+		/// Give the stops that are directly reachable from start stop.
+		/// </summary>
+		/// <param name="start"></param>
+		/// <returns></returns>
+		std::unordered_map<std::string, int> GetConnectedStops(const std::string& start) const;
 
 	private:
 
@@ -99,6 +107,8 @@ namespace catalogue {
 		int GetTrafficRoute(Bus* bus) const;
 		double GetCurvatureBus(Bus* bus) const;
 
+
+
 		std::deque<Stop> stops_;
 
 		std::unordered_map<std::string, Stop*> stopname_to_stop;
@@ -112,6 +122,7 @@ namespace catalogue {
 		std::unordered_map<std::pair<Stop*, Stop*>, int, PairOfStopsPtrHasher> stops_to_distances;
 
 	};
+
 
 
 	template <typename StopIt>
@@ -175,5 +186,6 @@ namespace catalogue {
 
 		return destinations;
 	}
+
 }
 
